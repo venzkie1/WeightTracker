@@ -9,6 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Canvas Confetti CDN for Milestone Celebrations -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <style>
     :root {
@@ -28,6 +30,7 @@
       --accent-carbs: #00d2d3;
       --accent-fat: #ff9f43;
       --accent-water: #00cec9;
+      --accent-gold: #f1c40f;
       
       --danger: #ff5252;
       --warning: #ff9f43;
@@ -49,7 +52,6 @@
       overflow-x: hidden;
     }
 
-    /* Top Sticky Navigation Bar combining brand & navigation tabs */
     .top-nav-bar {
       position: sticky;
       top: 0;
@@ -83,7 +85,7 @@
     }
     .brand-title { font-size: 0.95rem; font-weight: 700; color: var(--text-main); letter-spacing: -0.3px; }
 
-    .nav-list { list-style: none; display: flex; gap: 6px; }
+    .nav-list { list-style: none; display: flex; gap: 6px; flex-wrap: wrap; }
     .nav-item button {
       display: flex;
       align-items: center;
@@ -154,7 +156,7 @@
 
     .overview-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 16px;
       margin-bottom: 24px;
     }
@@ -201,7 +203,6 @@
       gap: 20px;
     }
 
-    /* Water Tracker Widget Style */
     .water-tracker-box {
       background: var(--bg-input);
       border: 1px solid var(--border);
@@ -230,7 +231,6 @@
     }
     .water-btn:hover { background: rgba(0, 206, 201, 0.25); }
 
-    /* Analytics Filter Switcher */
     .filter-pills {
       display: flex;
       gap: 6px;
@@ -262,6 +262,73 @@
       gap: 20px;
       margin-top: 20px;
     }
+
+    /* Heatmap Grid */
+    .heatmap-container {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .heatmap-cell {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      aspect-ratio: 1;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .heatmap-cell.logged {
+      background: rgba(29, 209, 161, 0.25);
+      border-color: var(--success);
+      color: var(--success);
+    }
+
+    /* Trophies & Badges Grid */
+    .badges-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .badge-card {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-elem);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      opacity: 0.4;
+      transition: all 0.3s ease;
+    }
+    .badge-card.unlocked {
+      opacity: 1;
+      border-color: var(--accent-gold);
+      background: linear-gradient(135deg, rgba(241, 196, 15, 0.08), var(--bg-input));
+      box-shadow: 0 4px 20px rgba(241, 196, 15, 0.15);
+    }
+    .badge-icon {
+      font-size: 2rem;
+      width: 48px;
+      height: 48px;
+      background: var(--bg-card);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+    }
+    .badge-card.unlocked .badge-icon {
+      border-color: var(--accent-gold);
+    }
+    .badge-info h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 2px; }
+    .badge-info p { font-size: 0.75rem; color: var(--text-muted); }
 
     .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
     label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
@@ -358,7 +425,10 @@
       overflow-y: auto;
     }
 
-    /* Fully Responsive Breakpoints */
+    @media (max-width: 1200px) {
+      .overview-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
     @media (max-width: 1024px) {
       .overview-grid { grid-template-columns: repeat(2, 1fr); }
       .analytics-grid { grid-template-columns: 1fr; }
@@ -402,6 +472,11 @@
           <span>📋</span> <span>History</span>
         </button>
       </li>
+      <li class="nav-item">
+        <button onclick="switchTab('trophiesTab', this)">
+          <span>🏆</span> <span>Achievements</span>
+        </button>
+      </li>
     </ul>
   </div>
 
@@ -417,7 +492,7 @@
       </div>
     </header>
 
-    <!-- Dynamic Status Alert Banner -->
+    <!-- Dynamic Smart AI Coach Alert Banner -->
     <div id="targetAlert" class="alert-banner state-yellow">
       <div>
         <div class="alert-title" id="alertTitle">Target Progress Status</div>
@@ -427,6 +502,12 @@
 
     <!-- Overview KPI Cards -->
     <div class="overview-grid">
+      <div class="card">
+        <div class="card-title">🔥 Logging Streak</div>
+        <div class="card-num" id="streak-num">0 Days</div>
+        <div class="card-sub" id="streak-sub">Keep the momentum going!</div>
+      </div>
+
       <div class="card">
         <div class="card-title">7-Day Wt Trend</div>
         <div class="card-num" id="week-wt">-- kg</div>
@@ -552,14 +633,21 @@
             </div>
 
             <div class="form-group">
-              <label for="mealCategory">Meal Category</label>
-              <select id="mealCategory">
-                <option value="Breakfast">Breakfast</option>
-                <option value="Lunch">Lunch</option>
-                <option value="Dinner">Dinner</option>
-                <option value="Snacks">Snacks</option>
+              <label for="favoriteSelect">⭐ Custom Favorites</label>
+              <select id="favoriteSelect" onchange="applyFavoriteFood()">
+                <option value="" disabled selected>-- Select favorite --</option>
               </select>
             </div>
+          </div>
+
+          <div class="form-group">
+            <label for="mealCategory">Meal Category</label>
+            <select id="mealCategory">
+              <option value="Breakfast">Breakfast</option>
+              <option value="Lunch">Lunch</option>
+              <option value="Dinner">Dinner</option>
+              <option value="Snacks">Snacks</option>
+            </select>
           </div>
 
           <div class="form-group">
@@ -574,7 +662,10 @@
             <div class="form-group"><label for="fFat">Fat</label><input type="number" id="fFat" placeholder="g" /></div>
           </div>
 
-          <button class="btn-primary" onclick="addFoodItem()">+ Log Food Item</button>
+          <div style="display: flex; gap: 8px; margin-top: 4px;">
+            <button class="btn-primary" onclick="addFoodItem()" style="flex: 2; margin-top: 0;">+ Log Food Item</button>
+            <button class="btn-target" onclick="saveAsFavorite()" style="flex: 1; border-color: var(--accent-protein); color: var(--accent-protein);">⭐ Save as Fav</button>
+          </div>
 
           <h3 style="font-size: 0.82rem; margin: 16px 0 10px 0; color: var(--text-muted); text-transform: uppercase;">Logged Food Entries:</h3>
           <div id="foodItemsContainer"></div>
@@ -612,11 +703,20 @@
         </div>
       </div>
 
-      <!-- Weight Curve Chart -->
-      <div class="card" style="margin-top: 20px;">
-        <div class="card-title">Weight Progression Trend (kg)</div>
-        <div style="height: 260px; position: relative;">
-          <canvas id="weightChart"></canvas>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+        <!-- Weight Curve Chart -->
+        <div class="card">
+          <div class="card-title">Weight Progression Trend (kg)</div>
+          <div style="height: 260px; position: relative;">
+            <canvas id="weightChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Activity Heatmap Grid -->
+        <div class="card">
+          <div class="card-title">30-Day Consistency Heatmap</div>
+          <div id="activityHeatmap" class="heatmap-container"></div>
+          <div style="font-size: 0.75krem; color: var(--text-muted); margin-top: 12px;">Green blocks indicate active logged days.</div>
         </div>
       </div>
     </div>
@@ -649,6 +749,19 @@
         </div>
       </div>
     </div>
+
+    <!-- TAB 4: TROPHIES & ACHIEVEMENTS -->
+    <div id="trophiesTab" class="tab-content">
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <h2 style="font-size: 1.1rem; font-weight: 700;">🏆 Milestones & Achievements</h2>
+          <span id="badgeCounterText" style="font-size: 0.85rem; color: var(--accent-gold); font-weight: 600;">0 / 6 Unlocked</span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;">Complete goals and build habits to unlock badges and trigger celebratory confetti!</p>
+        
+        <div class="badges-grid" id="badgesContainer"></div>
+      </div>
+    </div>
   </main>
 
   <!-- Target & TDEE Calculator Modal -->
@@ -656,7 +769,6 @@
     <div class="modal-card">
       <h2 style="font-size: 1.1rem; margin-bottom: 14px;">Goals & TDEE Calculator</h2>
       
-      <!-- Auto TDEE Calculator Form Section -->
       <div style="background: var(--bg-input); padding: 12px; border-radius: var(--radius-elem); border: 1px solid var(--border); margin-bottom: 16px;">
         <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent-indigo); margin-bottom: 8px;">✨ Auto-Estimate via TDEE Formula</div>
         <div class="grid-2">
@@ -722,10 +834,23 @@
     let userTargets = JSON.parse(localStorage.getItem('fitness_targets')) || { cal: 1500, prot: 130, carb: 130, fat: 45 };
     document.getElementById('logDate').value = new Date().toISOString().split('T')[0];
     let db = JSON.parse(localStorage.getItem('fitness_db')) || {};
+    let favoriteFoods = JSON.parse(localStorage.getItem('fitness_favorites')) || [
+      { name: "My Post-Workout Shake", cal: 200, prot: 30, carb: 10, fat: 2, meal: "Snacks" }
+    ];
+    let unlockedBadges = JSON.parse(localStorage.getItem('fitness_badges')) || [];
 
     let calChartInstance = null;
     let macroChartInstance = null;
     let weightChartInstance = null;
+
+    const achievementsList = [
+      { id: 'first_log', title: 'First Step', desc: 'Log your very first meal entry', icon: '🌱' },
+      { id: 'streak_3', title: 'Momentum Builder', desc: 'Maintain a 3-day logging streak', icon: '🔥' },
+      { id: 'streak_7', title: 'Habit Master', desc: 'Maintain a 7-day logging streak', icon: '⭐' },
+      { id: 'weight_logged', title: 'Scale Tracker', desc: 'Record your morning body weight', icon: '⚖️' },
+      { id: 'protein_crusher', title: 'Protein Crusher', desc: 'Hit your daily protein target', icon: '💪' },
+      { id: 'water_goal', title: 'Hydrated', desc: 'Reach 2,500ml water intake in a day', icon: '💧' }
+    ];
 
     function updateHeaderTargetsUI() {
       document.getElementById('headerTargets').innerText = `Target: ${userTargets.cal} kcal | ~${userTargets.prot}g Protein | Goal 63-65 kg`;
@@ -762,7 +887,7 @@
       document.getElementById('editCarb').value = Math.round((targetCal * 0.4) / 4);
       document.getElementById('editFat').value = Math.round((targetCal * 0.25) / 9);
 
-      alert(`Computed TDEE: ~${tdee} kcal/day. Suggested a 500 kcal deficit target (${targetCal} kcal) applied!`);
+      alert(`Computed TDEE: ~${tdee} kcal/day. Suggested deficit target (${targetCal} kcal) applied!`);
     }
 
     function saveTargets() {
@@ -785,6 +910,9 @@
 
       if (tabId === 'analyticsTab') {
         renderAnalytics('week');
+        renderHeatmap();
+      } else if (tabId === 'trophiesTab') {
+        renderBadges();
       }
     }
 
@@ -797,6 +925,7 @@
 
     function saveDB() {
       localStorage.setItem('fitness_db', JSON.stringify(db));
+      checkAchievements();
       updateDashboard();
       renderHistory();
     }
@@ -860,13 +989,53 @@
       const select = document.getElementById('presetSelect');
       if (!select.value) return;
       const item = JSON.parse(select.value);
+      populateFoodInputs(item);
+      select.selectedIndex = 0;
+    }
+
+    function applyFavoriteFood() {
+      const select = document.getElementById('favoriteSelect');
+      if (!select.value) return;
+      const item = JSON.parse(select.value);
+      populateFoodInputs(item);
+      select.selectedIndex = 0;
+    }
+
+    function populateFoodInputs(item) {
       document.getElementById('foodName').value = item.name;
       document.getElementById('fCal').value = item.cal;
       document.getElementById('fProt').value = item.prot;
       document.getElementById('fCarb').value = item.carb;
       document.getElementById('fFat').value = item.fat;
       if (item.meal) document.getElementById('mealCategory').value = item.meal;
-      select.selectedIndex = 0;
+    }
+
+    function renderFavoritesDropdown() {
+      const select = document.getElementById('favoriteSelect');
+      select.innerHTML = '<option value="" disabled selected>-- Select favorite --</option>';
+      favoriteFoods.forEach(fav => {
+        const opt = document.createElement('option');
+        opt.value = JSON.stringify(fav);
+        opt.innerText = `${fav.name} (${fav.cal} kcal)`;
+        select.appendChild(opt);
+      });
+    }
+
+    function saveAsFavorite() {
+      const name = document.getElementById('foodName').value.trim();
+      const cal = parseInt(document.getElementById('fCal').value) || 0;
+      const prot = parseInt(document.getElementById('fProt').value) || 0;
+      const carb = parseInt(document.getElementById('fCarb').value) || 0;
+      const fat = parseInt(document.getElementById('fFat').value) || 0;
+      const meal = document.getElementById('mealCategory').value;
+
+      if (!name || cal <= 0) return alert("Enter food name and calories before saving as a favorite.");
+
+      const newFav = { name, cal, prot, carb, fat, meal };
+      favoriteFoods.push(newFav);
+      localStorage.setItem('fitness_favorites', JSON.stringify(favoriteFoods));
+      renderFavoritesDropdown();
+      alert(`Saved "${name}" to your Custom Favorites!`);
     }
 
     function addFoodItem() {
@@ -977,9 +1146,120 @@
       }, { cal: 0, prot: 0, carb: 0, fat: 0 });
     }
 
+    function calculateStreak() {
+      let streak = 0;
+      let checkDate = new Date();
+      while (true) {
+        const dateStr = checkDate.toISOString().split('T')[0];
+        if (db[dateStr] && db[dateStr].foods && db[dateStr].foods.length > 0) {
+          streak++;
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+          if (streak === 0 && dateStr === new Date().toISOString().split('T')[0]) {
+            checkDate.setDate(checkDate.getDate() - 1);
+            const yestStr = checkDate.toISOString().split('T')[0];
+            if (db[yestStr] && db[yestStr].foods && db[yestStr].foods.length > 0) {
+              streak++;
+              checkDate.setDate(checkDate.getDate() - 1);
+              continue;
+            }
+          }
+          break;
+        }
+      }
+      return streak;
+    }
+
+    function triggerConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      }
+    }
+
+    function checkAchievements() {
+      const currentStreak = calculateStreak();
+      const todayStr = getSelectedDate();
+      const todayTotals = getDayTotals(db[todayStr]);
+      const hasLoggedAny = Object.values(db).some(d => d.foods && d.foods.length > 0);
+      const hasWeight = Object.values(db).some(d => d.weight !== null && d.weight > 0);
+
+      const unlocks = [
+        { id: 'first_log', condition: hasLoggedAny },
+        { id: 'streak_3', condition: currentStreak >= 3 },
+        { id: 'streak_7', condition: currentStreak >= 7 },
+        { id: 'weight_logged', condition: hasWeight },
+        { id: 'protein_crusher', condition: todayTotals.prot >= userTargets.prot },
+        { id: 'water_goal', condition: (db[todayStr]?.water || 0) >= 2500 }
+      ];
+
+      let newlyUnlocked = false;
+      unlocks.forEach(item => {
+        if (item.condition && !unlockedBadges.includes(item.id)) {
+          unlockedBadges.push(item.id);
+          newlyUnlocked = true;
+          const badgeMeta = achievementsList.find(b => b.id === item.id);
+          alert(`🏆 Achievement Unlocked: ${badgeMeta.title}! Check the Achievements tab.`);
+        }
+      });
+
+      if (newlyUnlocked) {
+        localStorage.setItem('fitness_badges', JSON.stringify(unlockedBadges));
+        triggerConfetti();
+      }
+    }
+
+    function renderBadges() {
+      const container = document.getElementById('badgesContainer');
+      container.innerHTML = '';
+      let unlockedCount = 0;
+
+      achievementsList.forEach(badge => {
+        const isUnlocked = unlockedBadges.includes(badge.id);
+        if (isUnlocked) unlockedCount++;
+
+        const card = document.createElement('div');
+        card.className = `badge-card ${isUnlocked ? 'unlocked' : ''}`;
+        card.innerHTML = `
+          <div class="badge-icon">${badge.icon}</div>
+          <div class="badge-info">
+            <h4>${badge.title}</h4>
+            <p>${badge.desc}</p>
+            <span style="font-size: 0.7rem; color: ${isUnlocked ? 'var(--success)' : 'var(--text-muted)'}; margin-top: 4px; display: block;">
+              ${isUnlocked ? 'Unlocked ✓' : 'Locked'}
+            </span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      document.getElementById('badgeCounterText').innerText = `${unlockedCount} / ${achievementsList.length} Unlocked`;
+    }
+
+    function renderHeatmap() {
+      const container = document.getElementById('activityHeatmap');
+      container.innerHTML = '';
+
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toISOString().split('T')[0];
+        const isLogged = db[dateStr] && db[dateStr].foods && db[dateStr].foods.length > 0;
+
+        const cell = document.createElement('div');
+        cell.className = `heatmap-cell ${isLogged ? 'logged' : ''}`;
+        cell.innerText = d.getDate();
+        cell.title = `${dateStr}: ${isLogged ? 'Logged' : 'No logs'}`;
+        container.appendChild(cell);
+      }
+    }
+
     function updateDashboard() {
       const todayStr = getSelectedDate();
       const todayTotals = getDayTotals(db[todayStr]);
+      const currentStreak = calculateStreak();
+
+      document.getElementById('streak-num').innerText = `${currentStreak} Days`;
+      document.getElementById('streak-sub').innerText = currentStreak > 0 ? `Active logging streak!` : `Log meals today to start!`;
 
       document.getElementById('today-cal').innerText = `${todayTotals.cal} kcal`;
       document.getElementById('cal-progress-fill').style.width = `${Math.min(100, Math.round((todayTotals.cal / userTargets.cal) * 100))}%`;
@@ -1005,16 +1285,16 @@
 
       if (todayTotals.cal === 0) {
         alertBox.className = "alert-banner state-red";
-        alertTitle.innerText = "No Food Logged Today";
+        alertTitle.innerText = "🧠 AI Coach: No Food Logged Today";
         alertDesc.innerText = `Target is ${userTargets.cal} kcal & ${pTarget}g protein. Log your meals to track progress!`;
       } else if (calDiff > 400) {
         alertBox.className = "alert-banner state-yellow";
-        alertTitle.innerText = `Large Deficit: Short by ${calDiff} kcal & ${protDiff > 0 ? protDiff + 'g Protein' : '0g Protein'}`;
+        alertTitle.innerText = `🧠 AI Coach: Large Deficit (Short by ${calDiff} kcal)`;
         alertDesc.innerText = `Consider adding a protein shake or light meal to reach your target safely.`;
       } else {
         alertBox.className = "alert-banner state-green";
-        alertTitle.innerText = "Target Achieved!";
-        alertDesc.innerText = `Great job! You logged ${todayTotals.cal} kcal and ${todayTotals.prot}g protein today.`;
+        alertTitle.innerText = "🧠 AI Coach: Target Achieved!";
+        alertDesc.innerText = `Great consistency! You've logged ${todayTotals.cal} kcal and ${todayTotals.prot}g protein today.`;
       }
 
       const dates = Object.keys(db).sort((a, b) => new Date(b) - new Date(a));
@@ -1277,8 +1557,10 @@
     }
 
     updateHeaderTargetsUI();
+    renderFavoritesDropdown();
     loadDateData();
     renderHistory();
+    checkAchievements();
   </script>
 </body>
 </html>
