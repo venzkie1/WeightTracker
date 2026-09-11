@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fitness, Weight & Food Logger</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --accent: #38bdf8;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: #334155;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --danger: #f87171;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    
+    body { 
+      background-color: var(--bg); 
+      color: var(--text); 
+      padding: 16px 24px; 
+      width: 100vw; 
+      max-width: 100%; 
+      min-height: 100vh; 
+    }
+
+    header { 
+      text-align: center; 
+      margin-bottom: 14px; 
+      position: relative;
+    }
+    h1 { font-size: 1.5rem; color: var(--accent); }
+    .sub-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    p.sub { color: var(--muted); font-size: 0.85rem; }
+    
+    .edit-target-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      width: auto;
+      margin: 0;
+    }
+    .edit-target-btn:hover { background: var(--card); }
+
+    /* Dynamic Color Alert Banner */
+    .alert-banner {
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: all 0.3s ease;
+      border: 1px solid var(--border);
+      background: rgba(30, 41, 59, 0.8);
+    }
+    
+    .alert-banner.state-red { 
+      border-color: var(--danger); 
+      background: rgba(248, 113, 113, 0.12); 
+    }
+    .alert-banner.state-red .alert-title { color: var(--danger); }
+
+    .alert-banner.state-yellow { 
+      border-color: var(--warning); 
+      background: rgba(251, 191, 36, 0.12); 
+    }
+    .alert-banner.state-yellow .alert-title { color: var(--warning); }
+
+    .alert-banner.state-green { 
+      border-color: var(--success); 
+      background: rgba(52, 211, 153, 0.12); 
+    }
+    .alert-banner.state-green .alert-title { color: var(--success); }
+    
+    .alert-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 2px; }
+    .alert-desc { font-size: 0.82rem; color: var(--muted); }
+
+    /* Progress Bar Visuals */
+    .progress-bar-bg {
+      width: 100%;
+      background: var(--border);
+      height: 6px;
+      border-radius: 3px;
+      margin-top: 4px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    .progress-fill.over-target {
+      background: var(--danger);
+    }
+
+    /* Modal Overlay for Settings & Meals Breakdown */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(3px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    /* Dashboard Summary Cards */
+    .summary-grid { 
+      display: grid; 
+      grid-template-columns: repeat(4, 1fr); 
+      gap: 12px; 
+      margin-bottom: 14px; 
+    }
+    .summary-box { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 8px; text-align: center; }
+    .summary-title { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .summary-num { font-size: 1.1rem; font-weight: 700; color: var(--accent); margin-top: 4px; }
+    .summary-sub { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+
+    /* Navigation Tabs */
+    .tab-container { display: flex; gap: 10px; margin-bottom: 14px; }
+    .tab-btn { flex: 1; padding: 10px; background: var(--card); border: 1px solid var(--border); color: var(--muted); border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem; }
+    .tab-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Logger Grid */
+    .logger-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+    .card h2 { font-size: 1rem; margin-bottom: 10px; color: var(--text); }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; width: 100%; }
+
+    .form-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; width: 100%; min-width: 0; }
+    label { font-size: 0.75rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    input, select { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 6px; font-size: 0.88rem; width: 100%; min-width: 0; }
+    input:focus, select:focus { outline: none; border-color: var(--accent); }
+
+    button { width: 100%; background: var(--accent); color: #000; font-weight: 600; border: none; padding: 9px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; margin-top: 4px; }
+    button:active { opacity: 0.9; }
+
+    /* Grouped Meal List */
+    .meal-group { margin-bottom: 10px; }
+    .meal-group-title { font-size: 0.78rem; font-weight: 700; color: var(--accent); text-transform: uppercase; border-bottom: 1px dashed var(--border); padding-bottom: 2px; margin-bottom: 6px; }
+    .food-list-container { max-height: 220px; overflow-y: auto; padding-right: 4px; }
+    .food-list { list-style: none; }
+    .food-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg); border: 1px solid var(--border); padding: 6px 10px; border-radius: 6px; margin-bottom: 6px; font-size: 0.85rem; }
+    .food-info { display: flex; flex-direction: column; }
+    .food-macros { font-size: 0.72rem; color: var(--muted); }
+
+    /* Macro Visual Breakdown Bars */
+    .macro-bar-container { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    .macro-row { font-size: 0.7rem; color: var(--muted); }
+
+    .table-responsive { overflow-x: auto; max-height: 450px; overflow-y: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    th { color: var(--muted); font-weight: 600; position: sticky; top: 0; background: var(--card); }
+
+    .delete-btn { background: transparent; color: #ef4444; border: none; padding: 0 4px; cursor: pointer; font-size: 0.9rem; width: auto; margin: 0; }
+    .view-btn { background: transparent; color: var(--accent); border: 1px solid var(--border); padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; cursor: pointer; width: auto; margin: 0; white-space: nowrap; }
+    .view-btn:hover { background: var(--bg); }
+
+    /* Backup Actions Styling */
+    .backup-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--accent);
+    }
+    .btn-secondary:hover {
+      background: var(--card);
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 10px; }
+      .summary-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .logger-grid { grid-template-columns: 1fr; gap: 0; }
+      .grid-3 { grid-template-columns: 1fr; }
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .backup-actions { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Fitness, Weight & Food Logger</h1>
+    <div class="sub-container">
+      <p class="sub" id="headerTargets">Target: 1,500 kcal | ~130g Protein | 63-65 kg Goal</p>
+      <button class="edit-target-btn" onclick="openTargetModal()">⚙️ Edit Targets</button>
+    </div>
+  </header>
+
+  <!-- Edit Targets Modal -->
+  <div id="targetModal" class="modal-overlay">
+    <div class="modal-card">
+      <h2 style="font-size: 1.1rem; margin-bottom: 12px; color: var(--accent);">Adjust Daily Goals</h2>
+      <div class="form-group">
+        <label for="editCal">Daily Calorie Target (kcal)</label>
+        <input type="number" id="editCal" placeholder="1500" />
+      </div>
+      <div class="form-group">
+        <label for="editProt">Daily Protein Target (g)</label>
+        <input type="number" id="editProt" placeholder="130" />
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="editCarb">Carbs Cap (g)</label>
+          <input type="number" id="editCarb" placeholder="130" />
+        </div>
+        <div class="form-group">
+          <label for="editFat">Fat Cap (g)</label>
+          <input type="number" id="editFat" placeholder="45" />
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; margin-top: 12px;">
+        <button onclick="saveTargets()" style="background: var(--success); color: #000;">Save Goals</button>
+        <button onclick="closeTargetModal()" style="background: var(--border); color: var(--text);">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Meal Category Breakdown History Modal -->
+  <div id="mealDetailModal" class="modal-overlay">
+    <div class="modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h2 style="font-size: 1.05rem; color: var(--accent);" id="mealModalTitle">Meals for Selected Date</h2>
+        <button onclick="closeMealDetailModal()" style="background: transparent; color: var(--muted); border: none; font-size: 1.2rem; cursor: pointer; width: auto; margin: 0;">✕</button>
+      </div>
+      <div id="mealModalContent"></div>
+    </div>
+  </div>
+
+  <!-- Dynamic Color Alert Banner -->
+  <div id="targetAlert" class="alert-banner state-yellow">
+    <div>
+      <div class="alert-title" id="alertTitle">Target Progress Status</div>
+      <div class="alert-desc" id="alertDesc">Loading status...</div>
+    </div>
+  </div>
+
+  <!-- Dashboard Summary -->
+  <div class="summary-grid">
+    <!-- 7-Day Weight & Net Trend -->
+    <div class="summary-box">
+      <div class="summary-title">7-Day Wt Trend</div>
+      <div class="summary-num" id="week-wt">-- kg</div>
+      <div class="summary-sub" id="weight-trend">Net: -- kg</div>
+    </div>
+    
+    <!-- Today Calories -->
+    <div class="summary-box">
+      <div class="summary-title">Today Cal</div>
+      <div class="summary-num" id="today-cal">0 kcal</div>
+      <div class="progress-bar-bg">
+        <div id="cal-progress-fill" class="progress-fill"></div>
+      </div>
+    </div>
+
+    <!-- Macro Breakdown Visualizer -->
+    <div class="summary-box" style="text-align: left; padding: 8px 10px;">
+      <div class="summary-title" style="text-align: center;">Macro Split</div>
+      <div class="macro-bar-container">
+        <div class="macro-row">
+          <span id="label-prot">P: 0/130g</span>
+          <div class="progress-bar-bg"><div id="prot-fill" class="progress-fill" style="background: var(--success);"></div></div>
+        </div>
+        <div class="macro-row">
+          <span id="label-carb">C: 0/130g</span>
+          <div class="progress-bar-bg"><div id="carb-fill" class="progress-fill" style="background: var(--warning);"></div></div>
+        </div>
+        <div class="macro-row">
+          <span id="label-fat">F: 0/45g</span>
+          <div class="progress-bar-bg"><div id="fat-fill" class="progress-fill" style="background: #a855f7;"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7-Day Cal Avg & Deficit Insight -->
+    <div class="summary-box">
+      <div class="summary-title">7-Day Avg & Deficit</div>
+      <div class="summary-num" id="week-cal">0 kcal</div>
+      <div class="summary-sub" id="weekly-deficit">Est. Deficit: -- kcal</div>
+    </div>
+  </div>
+
+  <div class="tab-container">
+    <button class="tab-btn active" onclick="switchTab('loggerTab', this)">Daily Logger</button>
+    <button class="tab-btn" onclick="switchTab('historyTab', this)">History Log</button>
+  </div>
+
+  <!-- TAB 1: LOGGER -->
+  <div id="loggerTab" class="tab-content active">
+    <div class="card" style="padding: 10px 14px;">
+      <div class="form-group" style="margin: 0;">
+        <label for="logDate">Logging Date</label>
+        <input type="date" id="logDate" onchange="loadDateData()" />
+      </div>
+    </div>
+
+    <div class="logger-grid">
+      <div class="card">
+        <h2>Morning Weight & Activity</h2>
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="weight">Weight (kg)</label>
+            <input type="number" id="weight" step="0.1" placeholder="73.0" />
+          </div>
+          <div class="form-group">
+            <label for="waist">Waist (cm/in)</label>
+            <input type="number" id="waist" step="0.1" placeholder="85" />
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="form-group">
+            <label for="activityType">Activity</label>
+            <select id="activityType">
+              <option value="" disabled selected>Select Activity</option>
+              <option value="Rest Day">Rest Day</option>
+              <option value="Walking">Walking</option>
+              <option value="Workout">Workout</option>
+              <option value="Walk + Workout">Walk + Workout</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="distance">Dist (km)</label>
+            <input type="number" id="distance" step="0.1" placeholder="5.0" />
+          </div>
+          <div class="form-group">
+            <label for="duration">Time/Min</label>
+            <input type="text" id="duration" placeholder="60m" />
+          </div>
+        </div>
+
+        <button onclick="saveDayDetails()" style="background: var(--success); color: #000;">Save Weight & Activity</button>
+      </div>
+
+      <div class="card">
+        <h2>Add Food Item</h2>
+
+        <div class="grid-2">
+          <!-- Quick Add Preset Staples -->
+          <div class="form-group">
+            <label for="presetSelect">⚡ Quick Add Staple</label>
+            <select id="presetSelect" onchange="applyPresetFood()">
+              <option value="" disabled selected>-- Select staple --</option>
+              
+              <!-- Breakfast Staples -->
+              <option value='{"name":"2 Boiled Eggs","cal":140,"prot":12,"carb":1,"fat":10,"meal":"Breakfast"}'>2 Boiled Eggs (140 kcal)</option>
+              <option value='{"name":"4 Boiled Eggs","cal":280,"prot":24,"carb":2,"fat":20,"meal":"Breakfast"}'>4 Boiled Eggs (280 kcal)</option>
+              <option value='{"name":"1 Slice Whole Wheat Bread","cal":80,"prot":4,"carb":14,"fat":1,"meal":"Breakfast"}'>1 Slice Wheat Bread (80 kcal)</option>
+
+              <!-- Lunch & Dinner Staples -->
+              <option value='{"name":"1 Cup Cooked White Rice","cal":200,"prot":4,"carb":45,"fat":0,"meal":"Lunch"}'>1 Cup White Rice (200 kcal)</option>
+              <option value='{"name":"Palm-size Chicken Breast (120g)","cal":198,"prot":37,"carb":0,"fat":4,"meal":"Lunch"}'>Palm-size Chicken Breast (198 kcal)</option>
+              <option value='{"name":"Palm-size Lean Pork Cut (120g)","cal":180,"prot":26,"carb":0,"fat":8,"meal":"Lunch"}'>Palm-size Lean Pork (180 kcal)</option>
+              <option value='{"name":"Palm-size White Fish Fillet (120g)","cal":110,"prot":22,"carb":0,"fat":2,"meal":"Lunch"}'>Palm-size Fish Fillet (110 kcal)</option>
+              <option value='{"name":"Palm-size Lean Beef (120g)","cal":210,"prot":30,"carb":0,"fat":9,"meal":"Lunch"}'>Palm-size Lean Beef (210 kcal)</option>
+              <option value='{"name":"1 Can Tuna Flakes in Oil (Drained)","cal":160,"prot":26,"carb":0,"fat":6,"meal":"Lunch"}'>1 Can Drained Tuna (160 kcal)</option>
+              <option value='{"name":"1 Handful Cooked Veggies (Kangkong)","cal":35,"prot":2,"carb":5,"fat":1,"meal":"Lunch"}'>1 Handful Veggies (35 kcal)</option>
+
+              <!-- Fruit Options -->
+              <option value='{"name":"1 Medium Apple","cal":95,"prot":0,"carb":25,"fat":0,"meal":"Snacks"}'>1 Medium Apple (95 kcal)</option>
+              <option value='{"name":"1 Medium Banana","cal":105,"prot":1,"carb":27,"fat":0,"meal":"Snacks"}'>1 Medium Banana (105 kcal)</option>
+              <option value='{"name":"1 Slice Watermelon (200g)","cal":60,"prot":1,"carb":15,"fat":0,"meal":"Snacks"}'>1 Slice Watermelon (60 kcal)</option>
+              <option value='{"name":"1/2 Ripe Mango","cal":100,"prot":1,"carb":25,"fat":0,"meal":"Snacks"}'>1/2 Ripe Mango (100 kcal)</option>
+              
+              <!-- Supplement -->
+              <option value='{"name":"1 Scoop Whey Protein Shake","cal":120,"prot":24,"carb":2,"fat":1,"meal":"Snacks"}'>1 Scoop Whey Shake (120 kcal)</option>
+            </select>
+          </div>
+
+          <!-- Meal Time Category Selection -->
+          <div class="form-group">
+            <label for="mealCategory">Meal Category</label>
+            <select id="mealCategory">
+              <option value="Breakfast">Breakfast</option>
+              <option value="Lunch">Lunch</option>
+              <option value="Dinner">Dinner</option>
+              <option value="Snacks">Snacks</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="foodName">Food / Drink Name</label>
+          <input type="text" id="foodName" placeholder="e.g. Chicken Breast" />
+        </div>
+
+        <div class="grid-4">
+          <div class="form-group">
+            <label for="fCal">Cal</label>
+            <input type="number" id="fCal" placeholder="kcal" />
+          </div>
+          <div class="form-group">
+            <label for="fProt">Protein</label>
+            <input type="number" id="fProt" placeholder="g" />
+          </div>
+          <div class="form-group">
+            <label for="fCarb">Carbs</label>
+            <input type="number" id="fCarb" placeholder="g" />
+          </div>
+          <div class="form-group">
+            <label for="fFat">Fat</label>
+            <input type="number" id="fFat" placeholder="g" />
+          </div>
+        </div>
+
+        <button onclick="addFoodItem()">+ Add Food</button>
+
+        <h3 style="font-size: 0.8rem; margin: 10px 0 6px 0; color: var(--accent);">Logged Items For Selected Date:</h3>
+        <div class="food-list-container" id="foodItemsContainer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: HISTORY -->
+  <div id="historyTab" class="tab-content">
+    <div class="card">
+      <h2>History Overview</h2>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Weight</th>
+              <th>Calories</th>
+              <th>Macros (P/C/F)</th>
+              <th>Activity</th>
+              <th>Meals</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Backup & Restore Controls -->
+      <div class="backup-actions">
+        <button class="btn-secondary" onclick="exportData()">📥 Backup Data (Export JSON)</button>
+        <button class="btn-secondary" onclick="document.getElementById('importFileInput').click()">📤 Restore Data (Import JSON)</button>
+        <input type="file" id="importFileInput" style="display:none" accept=".json" onchange="importData(event)" />
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let userTargets = JSON.parse(localStorage.getItem('fitness_targets')) || { cal: 1500, prot: 130, carb: 130, fat: 45 };
+
+    document.getElementById('logDate').value = new Date().toISOString().split('T')[0];
+    let db = JSON.parse(localStorage.getItem('fitness_db')) || {};
+
+    function updateHeaderTargetsUI() {
+      document.getElementById('headerTargets').innerText = `Target: ${userTargets.cal} kcal | ~${userTargets.prot}g P | 63-65 kg Goal`;
+    }
+
+    function openTargetModal() {
+      document.getElementById('editCal').value = userTargets.cal;
+      document.getElementById('editProt').value = userTargets.prot;
+      document.getElementById('editCarb').value = userTargets.carb || 130;
+      document.getElementById('editFat').value = userTargets.fat || 45;
+      document.getElementById('targetModal').classList.add('active');
+    }
+
+    function closeTargetModal() {
+      document.getElementById('targetModal').classList.remove('active');
+    }
+
+    function saveTargets() {
+      const cal = parseInt(document.getElementById('editCal').value) || userTargets.cal;
+      const prot = parseInt(document.getElementById('editProt').value) || userTargets.prot;
+      const carb = parseInt(document.getElementById('editCarb').value) || 130;
+      const fat = parseInt(document.getElementById('editFat').value) || 45;
+
+      userTargets = { cal, prot, carb, fat };
+      localStorage.setItem('fitness_targets', JSON.stringify(userTargets));
+
+      updateHeaderTargetsUI();
+      updateDashboard();
+      closeTargetModal();
+    }
+
+    function openMealDetailModal(date) {
+      document.getElementById('mealModalTitle').innerText = `Meals for ${date}`;
+      const contentEl = document.getElementById('mealModalContent');
+      contentEl.innerHTML = '';
+
+      if (!db[date] || !db[date].foods || db[date].foods.length === 0) {
+        contentEl.innerHTML = `<p style="color:var(--muted); font-size:0.85rem; text-align:center; padding: 12px;">No foods logged for this date.</p>`;
+      } else {
+        const categories = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'];
+
+        categories.forEach(cat => {
+          const catFoods = db[date].foods.filter(item => (item.meal || 'Lunch') === cat);
+
+          if (catFoods.length > 0) {
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'meal-group';
+
+            const title = document.createElement('div');
+            title.className = 'meal-group-title';
+            title.innerText = cat;
+            groupDiv.appendChild(title);
+
+            const ul = document.createElement('ul');
+            ul.className = 'food-list';
+
+            catFoods.forEach(item => {
+              const li = document.createElement('li');
+              li.className = 'food-item';
+              li.innerHTML = `
+                <div class="food-info">
+                  <b>${item.name}</b>
+                  <span class="food-macros">${item.cal} kcal | P: ${item.prot}g | C: ${item.carb || 0}g | F: ${item.fat || 0}g</span>
+                </div>
+              `;
+              ul.appendChild(li);
+            });
+
+            groupDiv.appendChild(ul);
+            contentEl.appendChild(groupDiv);
+          }
+        });
+      }
+
+      document.getElementById('mealDetailModal').classList.add('active');
+    }
+
+    function closeMealDetailModal() {
+      document.getElementById('mealDetailModal').classList.remove('active');
+    }
+
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    function saveDB() {
+      localStorage.setItem('fitness_db', JSON.stringify(db));
+      updateDashboard();
+      renderHistory();
+    }
+
+    function getSelectedDate() {
+      return document.getElementById('logDate').value;
+    }
+
+    function ensureDateExists(date) {
+      if (!db[date]) {
+        db[date] = { weight: null, waist: null, activityType: '', distance: null, duration: null, foods: [] };
+      }
+    }
+
+    function loadDateData() {
+      const date = getSelectedDate();
+      ensureDateExists(date);
+      const dayData = db[date];
+
+      document.getElementById('weight').value = dayData.weight !== null ? dayData.weight : '';
+      document.getElementById('waist').value = dayData.waist !== null ? dayData.waist : '';
+      document.getElementById('activityType').value = dayData.activityType || '';
+      document.getElementById('distance').value = dayData.distance !== null ? dayData.distance : '';
+      document.getElementById('duration').value = dayData.duration || '';
+
+      renderFoodList();
+      updateDashboard();
+    }
+
+    function applyPresetFood() {
+      const select = document.getElementById('presetSelect');
+      if (!select.value) return;
+
+      const item = JSON.parse(select.value);
+      document.getElementById('foodName').value = item.name;
+      document.getElementById('fCal').value = item.cal;
+      document.getElementById('fProt').value = item.prot;
+      document.getElementById('fCarb').value = item.carb;
+      document.getElementById('fFat').value = item.fat;
+      if (item.meal) {
+        document.getElementById('mealCategory').value = item.meal;
+      }
+
+      select.selectedIndex = 0;
+    }
+
+    function addFoodItem() {
+      const date = getSelectedDate();
+      ensureDateExists(date);
+
+      const name = document.getElementById('foodName').value.trim();
+      const cal = parseInt(document.getElementById('fCal').value) || 0;
+      const prot = parseInt(document.getElementById('fProt').value) || 0;
+      const carb = parseInt(document.getElementById('fCarb').value) || 0;
+      const fat = parseInt(document.getElementById('fFat').value) || 0;
+      const meal = document.getElementById('mealCategory').value;
+
+      if (!name || cal <= 0) {
+        alert("Please enter a food name and calorie count.");
+        return;
+      }
+
+      db[date].foods.push({ name, cal, prot, carb, fat, meal });
+
+      document.getElementById('foodName').value = '';
+      document.getElementById('fCal').value = '';
+      document.getElementById('fProt').value = '';
+      document.getElementById('fCarb').value = '';
+      document.getElementById('fFat').value = '';
+
+      saveDB();
+      renderFoodList();
+    }
+
+    function deleteFoodItem(index) {
+      const date = getSelectedDate();
+      if (db[date] && db[date].foods) {
+        db[date].foods.splice(index, 1);
+        saveDB();
+        renderFoodList();
+      }
+    }
+
+    function renderFoodList() {
+      const date = getSelectedDate();
+      const containerEl = document.getElementById('foodItemsContainer');
+      containerEl.innerHTML = '';
+
+      if (!db[date] || db[date].foods.length === 0) {
+        containerEl.innerHTML = `<p style="color:var(--muted); font-size:0.75rem; text-align:center; padding: 6px;">No food logged for this date.</p>`;
+        return;
+      }
+
+      const categories = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'];
+
+      categories.forEach(cat => {
+        const catFoods = db[date].foods
+          .map((item, originalIdx) => ({ ...item, originalIdx }))
+          .filter(item => (item.meal || 'Lunch') === cat);
+
+        if (catFoods.length > 0) {
+          const groupDiv = document.createElement('div');
+          groupDiv.className = 'meal-group';
+
+          const title = document.createElement('div');
+          title.className = 'meal-group-title';
+          title.innerText = cat;
+          groupDiv.appendChild(title);
+
+          const ul = document.createElement('ul');
+          ul.className = 'food-list';
+
+          catFoods.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'food-item';
+            li.innerHTML = `
+              <div class="food-info">
+                <b>${item.name}</b>
+                <span class="food-macros">${item.cal} kcal | P: ${item.prot}g | C: ${item.carb || 0}g | F: ${item.fat || 0}g</span>
+              </div>
+              <button class="delete-btn" onclick="deleteFoodItem(${item.originalIdx})">✕</button>
+            `;
+            ul.appendChild(li);
+          });
+
+          groupDiv.appendChild(ul);
+          containerEl.appendChild(groupDiv);
+        }
+      });
+    }
+
+    function saveDayDetails() {
+      const date = getSelectedDate();
+      ensureDateExists(date);
+
+      const wVal = parseFloat(document.getElementById('weight').value);
+      const waistVal = parseFloat(document.getElementById('waist').value);
+      const distVal = parseFloat(document.getElementById('distance').value);
+
+      db[date].weight = !isNaN(wVal) ? wVal : null;
+      db[date].waist = !isNaN(waistVal) ? waistVal : null;
+      db[date].activityType = document.getElementById('activityType').value;
+      db[date].distance = !isNaN(distVal) ? distVal : null;
+      db[date].duration = document.getElementById('duration').value || null;
+
+      saveDB();
+      alert("Weight and Activity saved!");
+    }
+
+    function getDayTotals(dayObj) {
+      if (!dayObj || !dayObj.foods) return { cal: 0, prot: 0, carb: 0, fat: 0 };
+      return dayObj.foods.reduce((acc, f) => {
+        acc.cal += f.cal;
+        acc.prot += f.prot;
+        acc.carb += (f.carb || 0);
+        acc.fat += (f.fat || 0);
+        return acc;
+      }, { cal: 0, prot: 0, carb: 0, fat: 0 });
+    }
+
+    function generateSmartSuggestion(remCal, remProt) {
+      let tips = [];
+      const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+      if (remProt > 40) {
+        const highProteinOptions = [
+          "180g Chicken Breast (~50g P, 290 kcal)",
+          "2 scoops Whey Protein Shake (~50g P, 240 kcal)",
+          "Palm-size Lean Beef Patty (~42g P, 320 kcal)"
+        ];
+        tips.push(pickRandom(highProteinOptions));
+      } else if (remProt > 20) {
+        const modProteinOptions = [
+          "1 Can Drained Tuna Flakes in Oil (~26g P, 160 kcal)",
+          "Palm-size Chicken Breast (~37g P, 198 kcal)",
+          "4 Boiled Eggs (~24g P, 280 kcal)"
+        ];
+        tips.push(pickRandom(modProteinOptions));
+      } else if (remProt > 0) {
+        const lowProteinOptions = [
+          "2 Boiled Eggs (~12g P, 140 kcal)",
+          "1 Slice Whole Wheat Bread (~4g P, 80 kcal)"
+        ];
+        tips.push(pickRandom(lowProteinOptions));
+      }
+
+      if (tips.length === 0) {
+        return `<strong>Suggestion:</strong> You are right on target for calories and protein today!`;
+      }
+
+      return `<strong>Suggestion:</strong> Try adding ${tips.join(" OR ")} to bridge the gap.`;
+    }
+
+    function updateDashboard() {
+      const todayStr = getSelectedDate();
+      const todayTotals = getDayTotals(db[todayStr]);
+
+      document.getElementById('today-cal').innerText = `${todayTotals.cal} kcal`;
+
+      // Update Calorie Fill
+      const calPct = Math.min(100, Math.round((todayTotals.cal / userTargets.cal) * 100));
+      const calFill = document.getElementById('cal-progress-fill');
+      calFill.style.width = `${calPct}%`;
+      if (todayTotals.cal > userTargets.cal) calFill.classList.add('over-target');
+      else calFill.classList.remove('over-target');
+
+      // Update Macro Split Visualizer
+      const pTarget = userTargets.prot || 130;
+      const cTarget = userTargets.carb || 130;
+      const fTarget = userTargets.fat || 45;
+
+      document.getElementById('label-prot').innerText = `P: ${todayTotals.prot}/${pTarget}g`;
+      document.getElementById('label-carb').innerText = `C: ${todayTotals.carb}/${cTarget}g`;
+      document.getElementById('label-fat').innerText = `F: ${todayTotals.fat}/${fTarget}g`;
+
+      document.getElementById('prot-fill').style.width = `${Math.min(100, Math.round((todayTotals.prot / pTarget) * 100))}%`;
+      document.getElementById('carb-fill').style.width = `${Math.min(100, Math.round((todayTotals.carb / cTarget) * 100))}%`;
+      document.getElementById('fat-fill').style.width = `${Math.min(100, Math.round((todayTotals.fat / fTarget) * 100))}%`;
+
+      // Alert Box Logic
+      const alertBox = document.getElementById('targetAlert');
+      const alertTitle = document.getElementById('alertTitle');
+      const alertDesc = document.getElementById('alertDesc');
+
+      const calDiff = userTargets.cal - todayTotals.cal;
+      const protDiff = pTarget - todayTotals.prot;
+
+      if (todayTotals.cal === 0) {
+        alertBox.className = "alert-banner state-red";
+        alertTitle.innerText = "No Food Logged Today";
+        alertDesc.innerHTML = `Daily target is ${userTargets.cal} kcal & ${pTarget}g protein. Log your meals to track progress!`;
+      } else if (calDiff > 500) {
+        alertBox.className = "alert-banner state-red";
+        alertTitle.innerText = `Large Deficit Alert: Need ${calDiff} kcal & ${protDiff > 0 ? protDiff + 'g Protein' : '0g Protein'}`;
+        alertDesc.innerHTML = generateSmartSuggestion(calDiff, protDiff);
+      } else if (todayTotals.cal > userTargets.cal + 150) {
+        alertBox.className = "alert-banner state-red";
+        alertTitle.innerText = `Calorie Surplus Alert (+${todayTotals.cal - userTargets.cal} kcal)`;
+        alertDesc.innerHTML = `You've exceeded your daily target budget. Keep dinner light or add a walk.`;
+      } else if (calDiff > 100 || protDiff > 10) {
+        alertBox.className = "alert-banner state-yellow";
+        alertTitle.innerText = `Almost There: Short by ${calDiff > 0 ? calDiff + ' kcal' : ''} ${protDiff > 0 ? '& ' + protDiff + 'g Protein' : ''}`;
+        alertDesc.innerHTML = generateSmartSuggestion(calDiff, protDiff);
+      } else {
+        alertBox.className = "alert-banner state-green";
+        alertTitle.innerText = "Target Achieved!";
+        alertDesc.innerHTML = `Excellent! You're right on target with calories (${todayTotals.cal} kcal) and protein (${todayTotals.prot}g).`;
+      }
+
+      // Weight Trend & Weekly Deficit Insights
+      const dates = Object.keys(db).sort((a, b) => new Date(b) - new Date(a));
+      const weightEntries = dates.map(d => db[d].weight).filter(w => w !== null && w > 0);
+
+      if (weightEntries.length > 0) {
+        const last7Weights = weightEntries.slice(0, 7);
+        const avgWt = last7Weights.reduce((a, b) => a + b, 0) / last7Weights.length;
+        document.getElementById('week-wt').innerText = `${avgWt.toFixed(1)} kg`;
+
+        if (last7Weights.length > 1) {
+          const diff = last7Weights[0] - last7Weights[last7Weights.length - 1];
+          const sign = diff > 0 ? '+' : '';
+          document.getElementById('weight-trend').innerText = `Net 7d: ${sign}${diff.toFixed(1)} kg`;
+        } else {
+          document.getElementById('weight-trend').innerText = `Latest: ${weightEntries[0].toFixed(1)} kg`;
+        }
+      } else {
+        document.getElementById('week-wt').innerText = `-- kg`;
+        document.getElementById('weight-trend').innerText = `Net: -- kg`;
+      }
+
+      const last7Dates = dates.slice(0, 7);
+      let sum7Cal = 0, count7 = 0;
+      last7Dates.forEach(d => {
+        const t = getDayTotals(db[d]);
+        if (t.cal > 0) { sum7Cal += t.cal; count7++; }
+      });
+
+      if (count7 > 0) {
+        const avgCal = Math.round(sum7Cal / count7);
+        document.getElementById('week-cal').innerText = `${avgCal} kcal`;
+        
+        // Estimated maintenance ~2000 kcal for calculation
+        const estDeficitPerDay = Math.max(0, 2000 - avgCal);
+        document.getElementById('weekly-deficit').innerText = `Est. Deficit: ~${estDeficitPerDay * count7} kcal/wk`;
+      } else {
+        document.getElementById('week-cal').innerText = '0 kcal';
+        document.getElementById('weekly-deficit').innerText = 'Est. Deficit: -- kcal';
+      }
+    }
+
+    function deleteDateRecord(date) {
+      if (confirm(`Delete record for ${date}?`)) {
+        delete db[date];
+        saveDB();
+        loadDateData();
+      }
+    }
+
+    function renderHistory() {
+      const tbody = document.getElementById('historyBody');
+      tbody.innerHTML = '';
+
+      const dates = Object.keys(db).sort((a, b) => new Date(b) - new Date(a));
+
+      if (dates.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: var(--muted)">No data logged yet.</td></tr>`;
+        return;
+      }
+
+      dates.forEach(d => {
+        const day = db[d];
+        const t = getDayTotals(day);
+
+        let actText = '--';
+        if (day.activityType) {
+          actText = day.activityType;
+          let details = [];
+          if (day.distance) details.push(`${day.distance}km`);
+          if (day.duration) details.push(`${day.duration}`);
+          if (details.length > 0) actText += ` (${details.join(' / ')})`;
+        }
+
+        const mealCount = day.foods ? day.foods.length : 0;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><b>${d}</b></td>
+          <td>${day.weight ? day.weight.toFixed(1) + ' kg' : '--'}</td>
+          <td><b>${t.cal}</b></td>
+          <td>${t.prot}p / ${t.carb}c / ${t.fat}f</td>
+          <td>${actText}</td>
+          <td><button class="view-btn" onclick="openMealDetailModal('${d}')">👁️ View Meals (${mealCount})</button></td>
+          <td><button class="delete-btn" onclick="deleteDateRecord('${d}')">✕</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function exportData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `fitness_backup_${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importData(event) {
+      const fileReader = new FileReader();
+      fileReader.onload = function(e) {
+        try {
+          db = JSON.parse(e.target.result);
+          saveDB();
+          loadDateData();
+          alert("Data restored successfully!");
+        } catch (err) {
+          alert("Invalid JSON file.");
+        }
+      };
+      fileReader.readAsText(event.target.files[0]);
+    }
+
+    updateHeaderTargetsUI();
+    loadDateData();
+    renderHistory();
+  </script>
+</body>
+</html>
