@@ -25,42 +25,67 @@ let macroChartInstance = null;
 let weightChartInstance = null;
 
 const achievementsList = [
-  {
-    id: "first_log",
-    title: "First Step",
-    desc: "Log your very first meal entry",
-    icon: "🌱",
-  },
-  {
-    id: "streak_3",
-    title: "Momentum Builder",
-    desc: "Maintain a 3-day logging streak",
-    icon: "🔥",
-  },
-  {
-    id: "streak_7",
-    title: "Habit Master",
-    desc: "Maintain a 7-day logging streak",
-    icon: "⭐",
-  },
-  {
-    id: "weight_logged",
-    title: "Scale Tracker",
-    desc: "Record your morning body weight",
-    icon: "⚖️",
-  },
-  {
-    id: "protein_crusher",
-    title: "Protein Crusher",
-    desc: "Hit your daily protein target",
-    icon: "💪",
-  },
-  {
-    id: "water_goal",
-    title: "Hydrated",
-    desc: "Reach 2,500ml water intake in a day",
-    icon: "💧",
-  },
+  // Streaks (1-10)
+  { id: "first_log", title: "First Step", desc: "Log your very first meal entry", icon: "🌱" },
+  { id: "streak_3", title: "Momentum Builder", desc: "Maintain a 3-day logging streak", icon: "🔥" },
+  { id: "streak_7", title: "Habit Master", desc: "Maintain a 7-day logging streak", icon: "⭐" },
+  { id: "streak_14", title: "Two-Week Titan", desc: "Maintain a 14-day logging streak", icon: "🗓️" },
+  { id: "streak_21", title: "Habit Formed", desc: "Maintain a 21-day logging streak", icon: "⚡" },
+  { id: "streak_30", title: "Monthly Machine", desc: "Maintain a 30-day logging streak", icon: "🛡️" },
+  { id: "streak_60", title: "Two-Month Warrior", desc: "Maintain a 60-day logging streak", icon: "⚔️" },
+  { id: "streak_90", title: "Quarter Century", desc: "Maintain a 90-day logging streak", icon: "🎖️" },
+  { id: "streak_180", title: "Half-Year Hero", desc: "Maintain a 180-day logging streak", icon: "👑" },
+  { id: "streak_365", title: "Year of Consistency", desc: "Maintain a 365-day logging streak", icon: "🏆" },
+
+  // Protein & Nutrition Goals (11-20)
+  { id: "protein_crusher", title: "Protein Crusher", desc: "Hit your daily protein target", icon: "💪" },
+  { id: "protein_beast", title: "Protein Beast", desc: "Exceed 150g of protein in a single day", icon: "🥩" },
+  { id: "protein_titan", title: "Protein Titan", desc: "Exceed 200g of protein in a single day", icon: "🦾" },
+  { id: "macro_balanced", title: "Macro Balanced", desc: "Hit targets for Protein, Carbs, and Fat perfectly", icon: "🎯" },
+  { id: "calorie_sniper", title: "Calorie Sniper", desc: "Hit target calories within a +/- 20 kcal margin", icon: "🎯" },
+  { id: "clean_eater", title: "Clean Slate", desc: "Log 5 separate meal entries in one day", icon: "🥗" },
+  { id: "favorite_creator", title: "Recipe Creator", desc: "Save your first custom meal as a favorite", icon: "⭐" },
+  { id: "snack_master", title: "Smart Snacker", desc: "Log a healthy snack category entry", icon: "🍎" },
+  { id: "carb_keeper", title: "Carb Controller", desc: "Keep total carbs under your carb cap limit", icon: "🍞" },
+  { id: "fat_optimizer", title: "Fat Optimizer", desc: "Keep total fat under your fat cap limit", icon: "🥑" },
+
+  // Hydration Milestones (21-25)
+  { id: "water_start", title: "First Sip", desc: "Log your first water intake entry", icon: "💧" },
+  { id: "water_goal", title: "Hydrated", desc: "Reach 2,500ml water intake in a day", icon: "🌊" },
+  { id: "water_hydro", title: "Hydro Homie", desc: "Reach 3,500ml water intake in a day", icon: "🧊" },
+  { id: "water_ocean", title: "Ocean Deep", desc: "Reach 5,000ml water intake in a day", icon: "🐳" },
+  { id: "water_streak_3", title: "Aqua Consistent", desc: "Hit 2,500ml water intake for 3 consecutive days", icon: "💦" },
+
+  // Weight & Body Comp (26-35)
+  { id: "weight_logged", title: "Scale Tracker", desc: "Record your morning body weight", icon: "⚖️" },
+  { id: "waist_logged", title: "Tape Measurer", desc: "Record your morning waist measurement", icon: "📏" },
+  { id: "weight_loss_1", title: "First Drop", desc: "Lose your first 1 kg from initial record", icon: "📉" },
+  { id: "weight_loss_3", title: "Making Progress", desc: "Lose 3 kg total from your initial weight", icon: "📉" },
+  { id: "weight_loss_5", title: "Halfway There", desc: "Lose 5 kg total from your initial weight", icon: "📉" },
+  { id: "weight_goal_hit", title: "Goal Weight Achieved", desc: "Reach your target weight window (63-65 kg)", icon: "🎯" },
+  { id: "weight_stable", title: "Stable Weight", desc: "Record weight consistently for 7 days straight", icon: "📊" },
+  { id: "body_metrics", title: "Data Driven", desc: "Log both weight and waist on the same day", icon: "📋" },
+  { id: "weight_heavy_log", title: "Dedicated Weigh-In", desc: "Log 30 weight entries total", icon: "📈" },
+  { id: "weight_century", title: "Scale Veteran", desc: "Log 100 weight entries total", icon: "🏅" },
+
+  // Activity & Exercise (36-45)
+  { id: "activity_first", title: "First Sweat", desc: "Log any workout or walking activity", icon: "👟" },
+  { id: "distance_5km", title: "5K Crusher", desc: "Log a distance of 5 km or more in a day", icon: "🏃" },
+  { id: "distance_10km", title: "10K Master", desc: "Log a distance of 10 km or more in a day", icon: "🏃‍♂️" },
+  { id: "workout_logged", title: "Gym Goer", desc: "Log a structured workout session", icon: "🏋️" },
+  { id: "walk_and_workout", title: "Dual Threat", desc: "Complete a 'Walk + Workout' activity day", icon: "🔥" },
+  { id: "active_week", title: "Active Week", desc: "Log physical activity 5 days in a single week", icon: "🗓️" },
+  { id: "rest_day_smart", title: "Smart Recovery", desc: "Log a formal 'Rest Day' activity entry", icon: "🧘" },
+  { id: "cardio_king", title: "Cardio King", desc: "Log more than 60 minutes of duration", icon: "⏱️" },
+  { id: "consistency_cardio", title: "Pacing Out", desc: "Log 10 total activity sessions", icon: "👟" },
+  { id: "iron_pumper", title: "Iron Pumper", desc: "Log 30 total activity sessions", icon: "🦾" },
+
+  // App Power User & Miscellaneous (46-50)
+  { id: "backup_master", title: "Data Saver", desc: "Export your data backup JSON file", icon: "📥" },
+  { id: "copycat_meals", title: "Time Saver", desc: 'Use the "Copy Yesterday\'s Meals" tool', icon: "📋" },
+  { id: "tdee_calculator", title: "Math Whiz", desc: "Compute and apply personalized TDEE targets", icon: "✨" },
+  { id: "century_meals", title: "Century Feeds", desc: "Log 100 individual food item entries total", icon: "🍔" },
+  { id: "ultimate_master", title: "Dashboard Grandmaster", desc: "Unlock 40 out of 50 total achievements", icon: "🏆" }
 ];
 
 function updateHeaderTargetsUI() {
@@ -99,6 +124,9 @@ function computeTDEE() {
   document.getElementById("editProt").value = targetProt;
   document.getElementById("editCarb").value = Math.round((targetCal * 0.4) / 4);
   document.getElementById("editFat").value = Math.round((targetCal * 0.25) / 9);
+
+  // Check achievement for using TDEE Calculator
+  unlockBadge("tdee_calculator");
 
   alert(
     `Computed TDEE: ~${tdee} kcal/day. Suggested deficit target (${targetCal} kcal) applied!`,
@@ -185,6 +213,7 @@ function addWater(amount) {
   const date = getSelectedDate();
   ensureDateExists(date);
   db[date].water = Math.max(0, db[date].water + amount);
+  if (db[date].water > 0) unlockBadge("water_start");
   saveDB();
   updateWaterUI();
 }
@@ -220,6 +249,7 @@ function copyYesterdayMeals() {
   }
 
   db[currDateStr].foods = JSON.parse(JSON.stringify(db[yestStr].foods));
+  unlockBadge("copycat_meals");
   saveDB();
   renderFoodList();
   alert("Successfully copied yesterday's meals!");
@@ -276,6 +306,7 @@ function saveAsFavorite() {
   const newFav = { name, cal, prot, carb, fat, meal };
   favoriteFoods.push(newFav);
   localStorage.setItem("fitness_favorites", JSON.stringify(favoriteFoods));
+  unlockBadge("favorite_creator");
   renderFavoritesDropdown();
   alert(`Saved "${name}" to your Custom Favorites!`);
 }
@@ -294,6 +325,8 @@ function addFoodItem() {
   if (!name || cal <= 0) return alert("Enter food name and calorie count.");
 
   db[date].foods.push({ name, cal, prot, carb, fat, meal });
+
+  if (meal === "Snacks") unlockBadge("snack_master");
 
   document.getElementById("foodName").value = "";
   document.getElementById("fCal").value = "";
@@ -375,6 +408,18 @@ function saveDayDetails() {
   db[date].distance = !isNaN(distVal) ? distVal : null;
   db[date].duration = document.getElementById("duration").value || null;
 
+  if (!isNaN(wVal) && wVal > 0) unlockBadge("weight_logged");
+  if (!isNaN(waistVal) && waistVal > 0) unlockBadge("waist_logged");
+  if (!isNaN(wVal) && !isNaN(waistVal) && wVal > 0 && waistVal > 0)
+    unlockBadge("body_metrics");
+  if (db[date].activityType) unlockBadge("activity_first");
+  if (db[date].activityType === "Workout") unlockBadge("workout_logged");
+  if (db[date].activityType === "Walk + Workout")
+    unlockBadge("walk_and_workout");
+  if (db[date].activityType === "Rest Day") unlockBadge("rest_day_smart");
+  if (!isNaN(distVal) && distVal >= 5) unlockBadge("distance_5km");
+  if (!isNaN(distVal) && distVal >= 10) unlockBadge("distance_10km");
+
   saveDB();
   alert("Day activity saved!");
 }
@@ -423,6 +468,20 @@ function triggerConfetti() {
   }
 }
 
+function unlockBadge(badgeId) {
+  if (!unlockedBadges.includes(badgeId)) {
+    unlockedBadges.push(badgeId);
+    const badgeMeta = achievementsList.find((b) => b.id === badgeId);
+    if (badgeMeta) {
+      alert(
+        `🏆 Achievement Unlocked: ${badgeMeta.title}! Check the Achievements tab.`,
+      );
+    }
+    localStorage.setItem("fitness_badges", JSON.stringify(unlockedBadges));
+    triggerConfetti();
+  }
+}
+
 function checkAchievements() {
   const currentStreak = calculateStreak();
   const todayStr = getSelectedDate();
@@ -430,35 +489,66 @@ function checkAchievements() {
   const hasLoggedAny = Object.values(db).some(
     (d) => d.foods && d.foods.length > 0,
   );
-  const hasWeight = Object.values(db).some(
-    (d) => d.weight !== null && d.weight > 0,
-  );
 
-  const unlocks = [
-    { id: "first_log", condition: hasLoggedAny },
-    { id: "streak_3", condition: currentStreak >= 3 },
-    { id: "streak_7", condition: currentStreak >= 7 },
-    { id: "weight_logged", condition: hasWeight },
-    { id: "protein_crusher", condition: todayTotals.prot >= userTargets.prot },
-    { id: "water_goal", condition: (db[todayStr]?.water || 0) >= 2500 },
-  ];
+  // Streak checks
+  if (hasLoggedAny) unlockBadge("first_log");
+  if (currentStreak >= 3) unlockBadge("streak_3");
+  if (currentStreak >= 7) unlockBadge("streak_7");
+  if (currentStreak >= 14) unlockBadge("streak_14");
+  if (currentStreak >= 21) unlockBadge("streak_21");
+  if (currentStreak >= 30) unlockBadge("streak_30");
+  if (currentStreak >= 60) unlockBadge("streak_60");
+  if (currentStreak >= 90) unlockBadge("streak_90");
+  if (currentStreak >= 180) unlockBadge("streak_180");
+  if (currentStreak >= 365) unlockBadge("streak_365");
 
-  let newlyUnlocked = false;
-  unlocks.forEach((item) => {
-    if (item.condition && !unlockedBadges.includes(item.id)) {
-      unlockedBadges.push(item.id);
-      newlyUnlocked = true;
-      const badgeMeta = achievementsList.find((b) => b.id === item.id);
-      alert(
-        `🏆 Achievement Unlocked: ${badgeMeta.title}! Check the Achievements tab.`,
-      );
-    }
+  // Nutrition & Macros checks
+  if (todayTotals.prot >= userTargets.prot) unlockBadge("protein_crusher");
+  if (todayTotals.prot >= 150) unlockBadge("protein_beast");
+  if (todayTotals.prot >= 200) unlockBadge("protein_titan");
+  if (
+    todayTotals.prot >= userTargets.prot &&
+    todayTotals.carb <= userTargets.carb &&
+    todayTotals.fat <= userTargets.fat &&
+    todayTotals.cal > 0
+  )
+    unlockBadge("macro_balanced");
+
+  if (
+    todayTotals.cal >= userTargets.cal - 20 &&
+    todayTotals.cal <= userTargets.cal + 20
+  )
+    unlockBadge("calorie_sniper");
+
+  if (db[todayStr] && db[todayStr].foods && db[todayStr].foods.length >= 5)
+    unlockBadge("clean_eater");
+  if (todayTotals.carb <= userTargets.carb && todayTotals.cal > 0)
+    unlockBadge("carb_keeper");
+  if (todayTotals.fat <= userTargets.fat && todayTotals.cal > 0)
+    unlockBadge("fat_optimizer");
+
+  // Hydration checks
+  const water = db[todayStr]?.water || 0;
+  if (water >= 2500) unlockBadge("water_goal");
+  if (water >= 3500) unlockBadge("water_hydro");
+  if (water >= 5000) unlockBadge("water_ocean");
+
+  // Total food items count check
+  let totalFoodEntries = 0;
+  Object.values(db).forEach((d) => {
+    if (d.foods) totalFoodEntries += d.foods.length;
   });
+  if (totalFoodEntries >= 100) unlockBadge("century_meals");
 
-  if (newlyUnlocked) {
-    localStorage.setItem("fitness_badges", JSON.stringify(unlockedBadges));
-    triggerConfetti();
-  }
+  // Weight entries count check
+  let totalWeightEntries = Object.values(db).filter(
+    (d) => d.weight !== null && d.weight > 0,
+  ).length;
+  if (totalWeightEntries >= 30) unlockBadge("weight_heavy_log");
+  if (totalWeightEntries >= 100) unlockBadge("weight_century");
+
+  // Grandmaster check (unlocking 40+)
+  if (unlockedBadges.length >= 40) unlockBadge("ultimate_master");
 }
 
 function renderBadges() {
@@ -842,6 +932,7 @@ function exportData() {
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
+  unlockBadge("backup_master");
 }
 
 function importData(event) {
