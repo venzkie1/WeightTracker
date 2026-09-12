@@ -88,6 +88,57 @@ const achievementsList = [
   { id: "ultimate_master", title: "Dashboard Grandmaster", desc: "Unlock 40 out of 50 total achievements", icon: "🏆" }
 ];
 
+const fitnessTipsLibrary = [
+  {
+    title: "Understanding TDEE & Calorie Deficits",
+    category: "nutrition",
+    duration: "8 min watch",
+    desc: "Learn how total daily energy expenditure dictates your weight loss rate and how to set a safe, sustainable deficit without crashing your metabolism.",
+    videoId: "dQw4w9WgXcQ", // Placeholder or real YouTube embed ID
+    tags: ["Deficit", "Metabolism", "Fat Loss"]
+  },
+  {
+    title: "High-Protein Dieting for Muscle Retention",
+    category: "nutrition",
+    duration: "12 min watch",
+    desc: "Why protein is king during a cut. Discover optimal gram-per-kilogram targets and high-volume, lean protein food sources.",
+    videoId: "dQw4w9WgXcQ",
+    tags: ["Protein", "Macros", "Muscle"]
+  },
+  {
+    title: "Volume Eating: How to Stay Full in a Deficit",
+    category: "nutrition",
+    duration: "10 min watch",
+    desc: "Struggling with hunger while losing weight? Master the art of low-calorie density foods like leafy greens, fibrous veggies, and high-water volume meals.",
+    videoId: "dQw4w9WgXcQ",
+    tags: ["Satiety", "Diet Hacks", "Meal Prep"]
+  },
+  {
+    title: "Breaking Through Weight Loss Plateaus",
+    category: "mindset",
+    duration: "9 min watch",
+    desc: "Scale stuck for 3 weeks? Learn the difference between true fat loss stalls, water retention spikes from stress, and reverse dieting strategies.",
+    videoId: "dQw4w9WgXcQ",
+    tags: ["Plateau", "Scale Weight", "Progress"]
+  },
+  {
+    title: "Structuring Your Weekly Training Split",
+    category: "training",
+    duration: "15 min watch",
+    desc: "How to balance walking, resistance training, and active recovery days to maximize caloric burn while preserving joint health.",
+    videoId: "dQw4w9WgXcQ",
+    tags: ["Workout", "Recovery", "Consistency"]
+  },
+  {
+    title: "The Psychology of Long-Term Habit Building",
+    category: "mindset",
+    duration: "11 min watch",
+    desc: "Why motivation fails and systems win. Build frictionless daily logging habits that turn fitness into second nature.",
+    videoId: "dQw4w9WgXcQ",
+    tags: ["Habits", "Mindset", "Consistency"]
+  }
+];
+
 function updateHeaderTargetsUI() {
   document.getElementById("headerTargets").innerText =
     `Target: ${userTargets.cal} kcal | ~${userTargets.prot}g Protein | Goal 63-65 kg`;
@@ -110,8 +161,7 @@ function computeTDEE() {
   const gender = document.getElementById("calcGender").value;
   const height = parseFloat(document.getElementById("calcHeight").value) || 170;
   const weight = parseFloat(document.getElementById("calcWt").value) || 70;
-  const mult =
-    parseFloat(document.getElementById("calcActivity").value) || 1.55;
+  const mult = parseFloat(document.getElementById("calcActivity").value) || 1.55;
 
   let bmr = 10 * weight + 6.25 * height - 5 * age;
   bmr = gender === "male" ? bmr + 5 : bmr - 161;
@@ -125,19 +175,13 @@ function computeTDEE() {
   document.getElementById("editCarb").value = Math.round((targetCal * 0.4) / 4);
   document.getElementById("editFat").value = Math.round((targetCal * 0.25) / 9);
 
-  // Check achievement for using TDEE Calculator
   unlockBadge("tdee_calculator");
-
-  alert(
-    `Computed TDEE: ~${tdee} kcal/day. Suggested deficit target (${targetCal} kcal) applied!`,
-  );
+  alert(`Computed TDEE: ~${tdee} kcal/day. Suggested deficit target (${targetCal} kcal) applied!`);
 }
 
 function saveTargets() {
-  userTargets.cal =
-    parseInt(document.getElementById("editCal").value) || userTargets.cal;
-  userTargets.prot =
-    parseInt(document.getElementById("editProt").value) || userTargets.prot;
+  userTargets.cal = parseInt(document.getElementById("editCal").value) || userTargets.cal;
+  userTargets.prot = parseInt(document.getElementById("editProt").value) || userTargets.prot;
   userTargets.carb = parseInt(document.getElementById("editCarb").value) || 130;
   userTargets.fat = parseInt(document.getElementById("editFat").value) || 45;
 
@@ -148,12 +192,8 @@ function saveTargets() {
 }
 
 function switchTab(tabId, btn) {
-  document
-    .querySelectorAll(".tab-content")
-    .forEach((el) => el.classList.remove("active"));
-  document
-    .querySelectorAll(".nav-item button")
-    .forEach((el) => el.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach((el) => el.classList.remove("active"));
+  document.querySelectorAll(".nav-item button").forEach((el) => el.classList.remove("active"));
   document.getElementById(tabId).classList.add("active");
   btn.classList.add("active");
 
@@ -162,7 +202,59 @@ function switchTab(tabId, btn) {
     renderHeatmap();
   } else if (tabId === "trophiesTab") {
     renderBadges();
+  } else if (tabId === "tipsTab") {
+    renderTips("all");
   }
+}
+
+function renderTips(category) {
+  const container = document.getElementById("tipsContainer");
+  container.innerHTML = "";
+
+  const filtered = category === "all" 
+    ? fitnessTipsLibrary 
+    : fitnessTipsLibrary.filter(t => t.category === category);
+
+  filtered.forEach(tip => {
+    const card = document.createElement("div");
+    card.className = "card tip-card";
+    card.innerHTML = `
+      <div class="tip-header">
+        <span class="tip-category badge-${tip.category}">${tip.category.toUpperCase()}</span>
+        <span class="tip-duration">⏱️ ${tip.duration}</span>
+      </div>
+      <h3 class="tip-title">${tip.title}</h3>
+      <p class="tip-desc">${tip.desc}</p>
+      <div class="tip-tags">
+        ${tip.tags.map(t => `<span class="tip-tag">#${t}</span>`).join("")}
+      </div>
+      <button class="btn-primary" style="margin-top: 14px;" onclick="openVideoModal('${tip.title}', '${tip.videoId}', '${tip.desc}')">▶ Watch Masterclass</button>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function filterTips(category, btn) {
+  const parent = btn.parentElement;
+  parent.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderTips(category);
+}
+
+function openVideoModal(title, videoId, desc) {
+  document.getElementById("videoModalTitle").innerText = title;
+  document.getElementById("videoModalDesc").innerText = desc;
+  
+  const wrapper = document.getElementById("videoModalPlayerWrapper");
+  wrapper.innerHTML = `
+    <iframe width="100%" height="340" src="https://www.youtube.com/embed/${videoId}?autoplay=1" title="${title}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: 8px;"></iframe>
+  `;
+  document.getElementById("videoModal").classList.add("active");
+}
+
+function closeVideoModal() {
+  document.getElementById("videoModal").classList.remove("active");
+  document.getElementById("videoModalPlayerWrapper").innerHTML = "";
 }
 
 function getSelectedDate() {
@@ -195,13 +287,10 @@ function loadDateData() {
   ensureDateExists(date);
   const dayData = db[date];
 
-  document.getElementById("weight").value =
-    dayData.weight !== null ? dayData.weight : "";
-  document.getElementById("waist").value =
-    dayData.waist !== null ? dayData.waist : "";
+  document.getElementById("weight").value = dayData.weight !== null ? dayData.weight : "";
+  document.getElementById("waist").value = dayData.waist !== null ? dayData.waist : "";
   document.getElementById("activityType").value = dayData.activityType || "";
-  document.getElementById("distance").value =
-    dayData.distance !== null ? dayData.distance : "";
+  document.getElementById("distance").value = dayData.distance !== null ? dayData.distance : "";
   document.getElementById("duration").value = dayData.duration || "";
 
   renderFoodList();
@@ -223,10 +312,8 @@ function updateWaterUI() {
   ensureDateExists(date);
   const currentWater = db[date].water || 0;
   const targetWater = 2500;
-  document.getElementById("waterCountText").innerText =
-    `${currentWater} / ${targetWater} ml`;
-  document.getElementById("waterProgressFill").style.width =
-    `${Math.min(100, Math.round((currentWater / targetWater) * 100))}%`;
+  document.getElementById("waterCountText").innerText = `${currentWater} / ${targetWater} ml`;
+  document.getElementById("waterProgressFill").style.width = `${Math.min(100, Math.round((currentWater / targetWater) * 100))}%`;
 }
 
 function copyYesterdayMeals() {
@@ -241,10 +328,7 @@ function copyYesterdayMeals() {
   }
 
   ensureDateExists(currDateStr);
-  if (
-    db[currDateStr].foods.length > 0 &&
-    !confirm(`Overwrite today's meals with yesterday's items?`)
-  ) {
+  if (db[currDateStr].foods.length > 0 && !confirm(`Overwrite today's meals with yesterday's items?`)) {
     return;
   }
 
@@ -282,8 +366,7 @@ function populateFoodInputs(item) {
 
 function renderFavoritesDropdown() {
   const select = document.getElementById("favoriteSelect");
-  select.innerHTML =
-    '<option value="" disabled selected>-- Select favorite --</option>';
+  select.innerHTML = '<option value="" disabled selected>-- Select favorite --</option>';
   favoriteFoods.forEach((fav) => {
     const opt = document.createElement("option");
     opt.value = JSON.stringify(fav);
@@ -300,8 +383,7 @@ function saveAsFavorite() {
   const fat = parseInt(document.getElementById("fFat").value) || 0;
   const meal = document.getElementById("mealCategory").value;
 
-  if (!name || cal <= 0)
-    return alert("Enter food name and calories before saving as a favorite.");
+  if (!name || cal <= 0) return alert("Enter food name and calories before saving as a favorite.");
 
   const newFav = { name, cal, prot, carb, fat, meal };
   favoriteFoods.push(newFav);
@@ -325,7 +407,6 @@ function addFoodItem() {
   if (!name || cal <= 0) return alert("Enter food name and calorie count.");
 
   db[date].foods.push({ name, cal, prot, carb, fat, meal });
-
   if (meal === "Snacks") unlockBadge("snack_master");
 
   document.getElementById("foodName").value = "";
@@ -379,12 +460,12 @@ function renderFoodList() {
         const li = document.createElement("li");
         li.className = "food-item";
         li.innerHTML = `
-              <div class="food-info">
-                <b>${item.name}</b>
-                <span>${item.cal} kcal | P: ${item.prot}g | C: ${item.carb || 0}g | F: ${item.fat || 0}g</span>
-              </div>
-              <button class="delete-btn" onclick="deleteFoodItem(${item.originalIdx})">✕</button>
-            `;
+          <div class="food-info">
+            <b>${item.name}</b>
+            <span>${item.cal} kcal | P: ${item.prot}g | C: ${item.carb || 0}g | F: ${item.fat || 0}g</span>
+          </div>
+          <button class="delete-btn" onclick="deleteFoodItem(${item.originalIdx})">✕</button>
+        `;
         ul.appendChild(li);
       });
 
@@ -410,12 +491,10 @@ function saveDayDetails() {
 
   if (!isNaN(wVal) && wVal > 0) unlockBadge("weight_logged");
   if (!isNaN(waistVal) && waistVal > 0) unlockBadge("waist_logged");
-  if (!isNaN(wVal) && !isNaN(waistVal) && wVal > 0 && waistVal > 0)
-    unlockBadge("body_metrics");
+  if (!isNaN(wVal) && !isNaN(waistVal) && wVal > 0 && waistVal > 0) unlockBadge("body_metrics");
   if (db[date].activityType) unlockBadge("activity_first");
   if (db[date].activityType === "Workout") unlockBadge("workout_logged");
-  if (db[date].activityType === "Walk + Workout")
-    unlockBadge("walk_and_workout");
+  if (db[date].activityType === "Walk + Workout") unlockBadge("walk_and_workout");
   if (db[date].activityType === "Rest Day") unlockBadge("rest_day_smart");
   if (!isNaN(distVal) && distVal >= 5) unlockBadge("distance_5km");
   if (!isNaN(distVal) && distVal >= 10) unlockBadge("distance_10km");
@@ -473,9 +552,7 @@ function unlockBadge(badgeId) {
     unlockedBadges.push(badgeId);
     const badgeMeta = achievementsList.find((b) => b.id === badgeId);
     if (badgeMeta) {
-      alert(
-        `🏆 Achievement Unlocked: ${badgeMeta.title}! Check the Achievements tab.`,
-      );
+      alert(`🏆 Achievement Unlocked: ${badgeMeta.title}! Check the Achievements tab.`);
     }
     localStorage.setItem("fitness_badges", JSON.stringify(unlockedBadges));
     triggerConfetti();
@@ -486,11 +563,8 @@ function checkAchievements() {
   const currentStreak = calculateStreak();
   const todayStr = getSelectedDate();
   const todayTotals = getDayTotals(db[todayStr]);
-  const hasLoggedAny = Object.values(db).some(
-    (d) => d.foods && d.foods.length > 0,
-  );
+  const hasLoggedAny = Object.values(db).some((d) => d.foods && d.foods.length > 0);
 
-  // Streak checks
   if (hasLoggedAny) unlockBadge("first_log");
   if (currentStreak >= 3) unlockBadge("streak_3");
   if (currentStreak >= 7) unlockBadge("streak_7");
@@ -502,7 +576,6 @@ function checkAchievements() {
   if (currentStreak >= 180) unlockBadge("streak_180");
   if (currentStreak >= 365) unlockBadge("streak_365");
 
-  // Nutrition & Macros checks
   if (todayTotals.prot >= userTargets.prot) unlockBadge("protein_crusher");
   if (todayTotals.prot >= 150) unlockBadge("protein_beast");
   if (todayTotals.prot >= 200) unlockBadge("protein_titan");
@@ -514,10 +587,7 @@ function checkAchievements() {
   )
     unlockBadge("macro_balanced");
 
-  if (
-    todayTotals.cal >= userTargets.cal - 20 &&
-    todayTotals.cal <= userTargets.cal + 20
-  )
+  if (todayTotals.cal >= userTargets.cal - 20 && todayTotals.cal <= userTargets.cal + 20)
     unlockBadge("calorie_sniper");
 
   if (db[todayStr] && db[todayStr].foods && db[todayStr].foods.length >= 5)
@@ -527,27 +597,21 @@ function checkAchievements() {
   if (todayTotals.fat <= userTargets.fat && todayTotals.cal > 0)
     unlockBadge("fat_optimizer");
 
-  // Hydration checks
   const water = db[todayStr]?.water || 0;
   if (water >= 2500) unlockBadge("water_goal");
   if (water >= 3500) unlockBadge("water_hydro");
   if (water >= 5000) unlockBadge("water_ocean");
 
-  // Total food items count check
   let totalFoodEntries = 0;
   Object.values(db).forEach((d) => {
     if (d.foods) totalFoodEntries += d.foods.length;
   });
   if (totalFoodEntries >= 100) unlockBadge("century_meals");
 
-  // Weight entries count check
-  let totalWeightEntries = Object.values(db).filter(
-    (d) => d.weight !== null && d.weight > 0,
-  ).length;
+  let totalWeightEntries = Object.values(db).filter((d) => d.weight !== null && d.weight > 0).length;
   if (totalWeightEntries >= 30) unlockBadge("weight_heavy_log");
   if (totalWeightEntries >= 100) unlockBadge("weight_century");
 
-  // Grandmaster check (unlocking 40+)
   if (unlockedBadges.length >= 40) unlockBadge("ultimate_master");
 }
 
@@ -563,20 +627,19 @@ function renderBadges() {
     const card = document.createElement("div");
     card.className = `badge-card ${isUnlocked ? "unlocked" : ""}`;
     card.innerHTML = `
-          <div class="badge-icon">${badge.icon}</div>
-          <div class="badge-info">
-            <h4>${badge.title}</h4>
-            <p>${badge.desc}</p>
-            <span style="font-size: 0.7rem; color: ${isUnlocked ? "var(--success)" : "var(--text-muted)"}; margin-top: 4px; display: block;">
-              ${isUnlocked ? "Unlocked ✓" : "Locked"}
-            </span>
-          </div>
-        `;
+      <div class="badge-icon">${badge.icon}</div>
+      <div class="badge-info">
+        <h4>${badge.title}</h4>
+        <p>${badge.desc}</p>
+        <span style="font-size: 0.7rem; color: ${isUnlocked ? "var(--success)" : "var(--text-muted)"}; margin-top: 4px; display: block;">
+          ${isUnlocked ? "Unlocked ✓" : "Locked"}
+        </span>
+      </div>
+    `;
     container.appendChild(card);
   });
 
-  document.getElementById("badgeCounterText").innerText =
-    `${unlockedCount} / ${achievementsList.length} Unlocked`;
+  document.getElementById("badgeCounterText").innerText = `${unlockedCount} / ${achievementsList.length} Unlocked`;
 }
 
 function renderHeatmap() {
@@ -587,8 +650,7 @@ function renderHeatmap() {
     const d = new Date();
     d.setDate(d.getDate() - i);
     const dateStr = d.toISOString().split("T")[0];
-    const isLogged =
-      db[dateStr] && db[dateStr].foods && db[dateStr].foods.length > 0;
+    const isLogged = db[dateStr] && db[dateStr].foods && db[dateStr].foods.length > 0;
 
     const cell = document.createElement("div");
     cell.className = `heatmap-cell ${isLogged ? "logged" : ""}`;
@@ -604,37 +666,28 @@ function updateDashboard() {
   const currentStreak = calculateStreak();
 
   document.getElementById("streak-num").innerText = `${currentStreak} Days`;
-  document.getElementById("streak-sub").innerText =
-    currentStreak > 0 ? `Active logging streak!` : `Log meals today to start!`;
+  document.getElementById("streak-sub").innerText = currentStreak > 0 ? `Active logging streak!` : `Log meals today to start!`;
 
   document.getElementById("today-cal").innerText = `${todayTotals.cal} kcal`;
-  document.getElementById("cal-progress-fill").style.width =
-    `${Math.min(100, Math.round((todayTotals.cal / userTargets.cal) * 100))}%`;
+  document.getElementById("cal-progress-fill").style.width = `${Math.min(100, Math.round((todayTotals.cal / userTargets.cal) * 100))}%`;
 
   const pTarget = userTargets.prot || 130;
   const cTarget = userTargets.carb || 130;
   const fTarget = userTargets.fat || 45;
 
-  document.getElementById("label-prot").innerText =
-    `${todayTotals.prot}/${pTarget}g`;
-  document.getElementById("label-carb").innerText =
-    `${todayTotals.carb}/${cTarget}g`;
-  document.getElementById("label-fat").innerText =
-    `${todayTotals.fat}/${fTarget}g`;
+  document.getElementById("label-prot").innerText = `${todayTotals.prot}/${pTarget}g`;
+  document.getElementById("label-carb").innerText = `${todayTotals.carb}/${cTarget}g`;
+  document.getElementById("label-fat").innerText = `${todayTotals.fat}/${fTarget}g`;
 
-  document.getElementById("prot-fill").style.width =
-    `${Math.min(100, Math.round((todayTotals.prot / pTarget) * 100))}%`;
-  document.getElementById("carb-fill").style.width =
-    `${Math.min(100, Math.round((todayTotals.carb / cTarget) * 100))}%`;
-  document.getElementById("fat-fill").style.width =
-    `${Math.min(100, Math.round((todayTotals.fat / fTarget) * 100))}%`;
+  document.getElementById("prot-fill").style.width = `${Math.min(100, Math.round((todayTotals.prot / pTarget) * 100))}%`;
+  document.getElementById("carb-fill").style.width = `${Math.min(100, Math.round((todayTotals.carb / cTarget) * 100))}%`;
+  document.getElementById("fat-fill").style.width = `${Math.min(100, Math.round((todayTotals.fat / fTarget) * 100))}%`;
 
   const alertBox = document.getElementById("targetAlert");
   const alertTitle = document.getElementById("alertTitle");
   const alertDesc = document.getElementById("alertDesc");
 
   const calDiff = userTargets.cal - todayTotals.cal;
-  const protDiff = pTarget - todayTotals.prot;
 
   if (todayTotals.cal === 0) {
     alertBox.className = "alert-banner state-red";
@@ -643,7 +696,7 @@ function updateDashboard() {
   } else if (calDiff > 400) {
     alertBox.className = "alert-banner state-yellow";
     alertTitle.innerText = `🧠 AI Coach: Large Deficit (Short by ${calDiff} kcal)`;
-    alertDesc.innerText = `Consider adding a protein shake or light meal to reach your target safely.`;
+    alertDesc.innerText = `Consider adding a protein shake or light meal to reach your target safely. Check Tips & Videos for volume eating guides!`;
   } else {
     alertBox.className = "alert-banner state-green";
     alertTitle.innerText = "🧠 AI Coach: Target Achieved!";
@@ -651,22 +704,18 @@ function updateDashboard() {
   }
 
   const dates = Object.keys(db).sort((a, b) => new Date(b) - new Date(a));
-  const weights = dates
-    .map((d) => db[d].weight)
-    .filter((w) => w !== null && w > 0);
+  const weights = dates.map((d) => db[d].weight).filter((w) => w !== null && w > 0);
 
   if (weights.length > 0) {
     const last7 = weights.slice(0, 7);
     const avg = last7.reduce((a, b) => a + b, 0) / last7.length;
     document.getElementById("week-wt").innerText = `${avg.toFixed(1)} kg`;
-    document.getElementById("weight-trend").innerText =
-      `Latest: ${weights[0].toFixed(1)} kg`;
+    document.getElementById("weight-trend").innerText = `Latest: ${weights[0].toFixed(1)} kg`;
   } else {
     document.getElementById("week-wt").innerText = `-- kg`;
   }
 
-  let sumCal = 0,
-    count = 0;
+  let sumCal = 0, count = 0;
   dates.slice(0, 7).forEach((d) => {
     const t = getDayTotals(db[d]);
     if (t.cal > 0) {
@@ -678,16 +727,13 @@ function updateDashboard() {
   if (count > 0) {
     const avgCal = Math.round(sumCal / count);
     document.getElementById("week-cal").innerText = `${avgCal} kcal`;
-    document.getElementById("weekly-deficit").innerText =
-      `Est. Deficit: ~${Math.max(0, 2000 - avgCal) * count} kcal/wk`;
+    document.getElementById("weekly-deficit").innerText = `Est. Deficit: ~${Math.max(0, 2000 - avgCal) * count} kcal/wk`;
   }
 }
 
 function renderAnalytics(range, btn) {
   if (btn) {
-    document
-      .querySelectorAll(".filter-btn")
-      .forEach((b) => b.classList.remove("active"));
+    document.querySelectorAll(".filter-btn").forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
   }
 
@@ -695,9 +741,7 @@ function renderAnalytics(range, btn) {
   let labels = [];
   let caloriesData = [];
   let weightData = [];
-  let totalP = 0,
-    totalC = 0,
-    totalF = 0;
+  let totalP = 0, totalC = 0, totalF = 0;
 
   let limit = 7;
   if (range === "day") limit = 1;
@@ -705,8 +749,7 @@ function renderAnalytics(range, btn) {
   else if (range === "month") limit = 30;
   else if (range === "year") limit = 365;
 
-  const filteredDates =
-    range === "day" ? [getSelectedDate()] : dates.slice(-limit);
+  const filteredDates = range === "day" ? [getSelectedDate()] : dates.slice(-limit);
 
   filteredDates.forEach((d) => {
     labels.push(d);
@@ -741,32 +784,24 @@ function renderAnalytics(range, btn) {
     type: "line",
     data: {
       labels: labels,
-      datasets: [
-        {
-          label: "Calories (kcal)",
-          data: caloriesData,
-          borderColor: "#6366f1",
-          backgroundColor: gradCal,
-          borderWidth: 3,
-          fill: true,
-          tension: 0.4,
-          pointBackgroundColor: "#6366f1",
-        },
-      ],
+      datasets: [{
+        label: "Calories (kcal)",
+        data: caloriesData,
+        borderColor: "#6366f1",
+        backgroundColor: gradCal,
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: "#6366f1",
+      }],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: commonTooltipOptions },
       scales: {
-        x: {
-          grid: { color: "rgba(255,255,255,0.05)" },
-          ticks: { color: "#8e95ad" },
-        },
-        y: {
-          grid: { color: "rgba(255,255,255,0.05)" },
-          ticks: { color: "#8e95ad" },
-        },
+        x: { grid: { color: "rgba(255,255,255,0.05)" }, ticks: { color: "#8e95ad" } },
+        y: { grid: { color: "rgba(255,255,255,0.05)" }, ticks: { color: "#8e95ad" } },
       },
     },
   });
@@ -782,33 +817,25 @@ function renderAnalytics(range, btn) {
     type: "line",
     data: {
       labels: labels,
-      datasets: [
-        {
-          label: "Weight (kg)",
-          data: weightData,
-          borderColor: "#00d2d3",
-          backgroundColor: gradWt,
-          borderWidth: 3,
-          fill: true,
-          tension: 0.4,
-          spanGaps: true,
-          pointBackgroundColor: "#00d2d3",
-        },
-      ],
+      datasets: [{
+        label: "Weight (kg)",
+        data: weightData,
+        borderColor: "#00d2d3",
+        backgroundColor: gradWt,
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        spanGaps: true,
+        pointBackgroundColor: "#00d2d3",
+      }],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: commonTooltipOptions },
       scales: {
-        x: {
-          grid: { color: "rgba(255,255,255,0.05)" },
-          ticks: { color: "#8e95ad" },
-        },
-        y: {
-          grid: { color: "rgba(255,255,255,0.05)" },
-          ticks: { color: "#8e95ad" },
-        },
+        x: { grid: { color: "rgba(255,255,255,0.05)" }, ticks: { color: "#8e95ad" } },
+        y: { grid: { color: "rgba(255,255,255,0.05)" }, ticks: { color: "#8e95ad" } },
       },
     },
   });
@@ -820,22 +847,17 @@ function renderAnalytics(range, btn) {
     type: "doughnut",
     data: {
       labels: ["Protein (g)", "Carbs (g)", "Fat (g)"],
-      datasets: [
-        {
-          data: [totalP, totalC, totalF],
-          backgroundColor: ["#e056fd", "#00d2d3", "#ff9f43"],
-          borderWidth: 0,
-        },
-      ],
+      datasets: [{
+        data: [totalP, totalC, totalF],
+        backgroundColor: ["#e056fd", "#00d2d3", "#ff9f43"],
+        borderWidth: 0,
+      }],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: {
-          position: "bottom",
-          labels: { color: "#8e95ad", font: { family: "Plus Jakarta Sans" } },
-        },
+        legend: { position: "bottom", labels: { color: "#8e95ad", font: { family: "Plus Jakarta Sans" } } },
         tooltip: commonTooltipOptions,
       },
       cutout: "70%",
@@ -852,9 +874,7 @@ function openMealDetailModal(date) {
     contentEl.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem;">No foods logged for this date.</p>`;
   } else {
     ["Breakfast", "Lunch", "Dinner", "Snacks"].forEach((cat) => {
-      const catFoods = db[date].foods.filter(
-        (item) => (item.meal || "Lunch") === cat,
-      );
+      const catFoods = db[date].foods.filter((item) => (item.meal || "Lunch") === cat);
       if (catFoods.length > 0) {
         const groupDiv = document.createElement("div");
         groupDiv.className = "meal-group";
@@ -900,14 +920,14 @@ function renderHistory() {
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
-          <td><b>${d}</b></td>
-          <td>${day.weight ? day.weight.toFixed(1) + " kg" : "--"}</td>
-          <td><b>${t.cal}</b></td>
-          <td><span style="color:var(--accent-protein); font-weight:600;">${t.prot}p</span> / <span style="color:var(--accent-carbs); font-weight:600;">${t.carb}c</span> / <span style="color:var(--accent-fat); font-weight:600;">${t.fat}f</span></td>
-          <td>${actText}</td>
-          <td><button class="btn-target" onclick="openMealDetailModal('${d}')">👁️ View Meals (${day.foods ? day.foods.length : 0})</button></td>
-          <td><button class="delete-btn" onclick="deleteDateRecord('${d}')">✕</button></td>
-        `;
+      <td><b>${d}</b></td>
+      <td>${day.weight ? day.weight.toFixed(1) + " kg" : "--"}</td>
+      <td><b>${t.cal}</b></td>
+      <td><span style="color:var(--accent-protein); font-weight:600;">${t.prot}p</span> / <span style="color:var(--accent-carbs); font-weight:600;">${t.carb}c</span> / <span style="color:var(--accent-fat); font-weight:600;">${t.fat}f</span></td>
+      <td>${actText}</td>
+      <td><button class="btn-target" onclick="openMealDetailModal('${d}')">👁️ View Meals (${day.foods ? day.foods.length : 0})</button></td>
+      <td><button class="delete-btn" onclick="deleteDateRecord('${d}')">✕</button></td>
+    `;
     tbody.appendChild(tr);
   });
 }
@@ -921,14 +941,10 @@ function deleteDateRecord(date) {
 }
 
 function exportData() {
-  const dataStr =
-    "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
   const anchor = document.createElement("a");
   anchor.setAttribute("href", dataStr);
-  anchor.setAttribute(
-    "download",
-    `fitness_backup_${new Date().toISOString().split("T")[0]}.json`,
-  );
+  anchor.setAttribute("download", `fitness_backup_${new Date().toISOString().split("T")[0]}.json`);
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
