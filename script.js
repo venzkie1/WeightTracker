@@ -716,19 +716,20 @@ function updateDashboard() {
   }
 
   let sumCal = 0, count = 0;
-  dates.slice(0, 7).forEach((d) => {
-    const t = getDayTotals(db[d]);
-    if (t.cal > 0) {
-      sumCal += t.cal;
-      count++;
-    }
-  });
+    dates.slice(0, 7).forEach((d) => {
+      const t = getDayTotals(db[d]);
+      if (t.cal > 0) {
+        sumCal += t.cal;
+        count++;
+      }
+    });
 
   if (count > 0) {
-    const avgCal = Math.round(sumCal / count);
-    document.getElementById("week-cal").innerText = `${avgCal} kcal`;
-    document.getElementById("weekly-deficit").innerText = `Est. Deficit: ~${Math.max(0, 2000 - avgCal) * count} kcal/wk`;
-  }
+      const avgCal = Math.round(sumCal / count);
+      const activeTarget = userTargets.cal || 1500;
+      document.getElementById("week-cal").innerText = `${avgCal} kcal`;
+      document.getElementById("weekly-deficit").innerText = `Est. Deficit: ~${Math.max(0, activeTarget - avgCal) * 7} kcal/wk`;
+    }
 }
 
 function renderAnalytics(range, btn) {
