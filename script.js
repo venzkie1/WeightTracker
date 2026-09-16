@@ -3,6 +3,8 @@ let userTargets = JSON.parse(localStorage.getItem("fitness_targets")) || {
   prot: 130,
   carb: 130,
   fat: 45,
+  minGoalWt: 63,
+  maxGoalWt: 65,
 };
 document.getElementById("logDate").value = new Date()
   .toISOString()
@@ -94,7 +96,7 @@ const fitnessTipsLibrary = [
     category: "nutrition",
     duration: "8 min watch",
     desc: "Learn how total daily energy expenditure dictates your weight loss rate and how to set a safe, sustainable deficit without crashing your metabolism.",
-    videoId: "dQw4w9WgXcQ", // Placeholder or real YouTube embed ID
+    videoId: "dQw4w9WgXcQ",
     tags: ["Deficit", "Metabolism", "Fat Loss"]
   },
   {
@@ -149,6 +151,8 @@ function openTargetModal() {
   document.getElementById("editProt").value = userTargets.prot;
   document.getElementById("editCarb").value = userTargets.carb || 130;
   document.getElementById("editFat").value = userTargets.fat || 45;
+  document.getElementById("editMinWt").value = userTargets.minGoalWt || 63;
+  document.getElementById("editMaxWt").value = userTargets.maxGoalWt || 65;
   document.getElementById("targetModal").classList.add("active");
 }
 
@@ -184,6 +188,8 @@ function saveTargets() {
   userTargets.prot = parseInt(document.getElementById("editProt").value) || userTargets.prot;
   userTargets.carb = parseInt(document.getElementById("editCarb").value) || 130;
   userTargets.fat = parseInt(document.getElementById("editFat").value) || 45;
+  userTargets.minGoalWt = parseFloat(document.getElementById("editMinWt").value) || 63;
+  userTargets.maxGoalWt = parseFloat(document.getElementById("editMaxWt").value) || 65;
 
   localStorage.setItem("fitness_targets", JSON.stringify(userTargets));
   updateHeaderTargetsUI();
@@ -716,20 +722,45 @@ function updateDashboard() {
   }
 
   let sumCal = 0, count = 0;
-    dates.slice(0, 7).forEach((d) => {
-      const t = getDayTotals(db[d]);
-      if (t.cal > 0) {
-        sumCal += t.cal;
-        count++;
-      }
-    });
+  dates.slice(0, 7).forEach((d) => {
+    const t = getDayTotals(db[d]);
+    if (t.cal > 0) {
+      sumCal += t.cal;
+      count++;
+    }
+  });
 
   if (count > 0) {
-      const avgCal = Math.round(sumCal / count);
-      const activeTarget = userTargets.cal || 1500;
-      document.getElementById("week-cal").innerText = `${avgCal} kcal`;
-      document.getElementById("weekly-deficit").innerText = `Est. Deficit: ~${Math.max(0, activeTarget - avgCal) * 7} kcal/wk`;
+    const avgCal = Math.round(sumCal / count);
+    const activeTarget = userTargets.cal || 1600;
+    const weeklyDeficit = Math.max(0, activeTarget - avgCal) * 7;
+    
+    document.getElementById("week-cal").innerText = `${avgCal} kcal`;
+    document.getElementById("weekly-deficit").innerText = `Est. Deficit: ~${weeklyDeficit} kcal/wk`;
+
+    // Bulletproof Goal Projection Logic
+    const sortedDates = Object.keys(db).sort((a, b) => new Date(a) - new Date(b));
+    const validWeights = sortedDates
+      .map(d => db[d].weight)
+      .filter(w => w !== null && !isNaN(w) && w > 0);
+    
+    const currentWeight = validWeights.length > 0 ? validWeights[validWeights.length - 1] : null;
+    const targetWeight = userTargets.minGoalWt || 63;
+
+    if (currentWeight !== null && currentWeight > targetWeight && weeklyDeficit > 0) {
+      const kgToLose = currentWeight - targetWeight;
+      const totalKcalNeeded = kgToLose * 7700;
+      const daysRemaining = Math.round((totalKcalNeeded / weeklyDeficit) * 7);
+      const weeksRemaining = (daysRemaining / 7).toFixed(1);
+
+      document.getElementById("weekly-deficit").innerText = `Deficit: ~${weeklyDeficit} kcal/wk (~${weeksRemaining} wks left)`;
+    } else if (currentWeight !== null && currentWeight <= targetWeight) {
+      document.getElementById("weekly-deficit").innerText = `Deficit: ~${weeklyDeficit} kcal/wk (Goal Reached! 🎉)`;
     }
+  } else {
+    document.getElementById("week-cal").innerText = `0 kcal`;
+    document.getElementById("weekly-deficit").innerText = `Est. Deficit: -- kcal`;
+  }
 }
 
 function renderAnalytics(range, btn) {
