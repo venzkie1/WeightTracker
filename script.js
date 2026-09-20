@@ -353,14 +353,6 @@ function applyPresetFood() {
   select.selectedIndex = 0;
 }
 
-function applyFavoriteFood() {
-  const select = document.getElementById("favoriteSelect");
-  if (!select.value) return;
-  const item = JSON.parse(select.value);
-  populateFoodInputs(item);
-  select.selectedIndex = 0;
-}
-
 function populateFoodInputs(item) {
   document.getElementById("foodName").value = item.name;
   document.getElementById("fCal").value = item.cal;
@@ -368,17 +360,6 @@ function populateFoodInputs(item) {
   document.getElementById("fCarb").value = item.carb;
   document.getElementById("fFat").value = item.fat;
   if (item.meal) document.getElementById("mealCategory").value = item.meal;
-}
-
-function renderFavoritesDropdown() {
-  const select = document.getElementById("favoriteSelect");
-  select.innerHTML = '<option value="" disabled selected>-- Select favorite --</option>';
-  favoriteFoods.forEach((fav) => {
-    const opt = document.createElement("option");
-    opt.value = JSON.stringify(fav);
-    opt.innerText = `${fav.name} (${fav.cal} kcal)`;
-    select.appendChild(opt);
-  });
 }
 
 function saveAsFavorite() {
@@ -395,7 +376,6 @@ function saveAsFavorite() {
   favoriteFoods.push(newFav);
   localStorage.setItem("fitness_favorites", JSON.stringify(favoriteFoods));
   unlockBadge("favorite_creator");
-  renderFavoritesDropdown();
   alert(`Saved "${name}" to your Custom Favorites!`);
 }
 
@@ -738,7 +718,6 @@ function updateDashboard() {
     document.getElementById("week-cal").innerText = `${avgCal} kcal`;
     document.getElementById("weekly-deficit").innerText = `Est. Deficit: ~${weeklyDeficit} kcal/wk`;
 
-    // Bulletproof Goal Projection Logic
     const sortedDates = Object.keys(db).sort((a, b) => new Date(a) - new Date(b));
     const validWeights = sortedDates
       .map(d => db[d].weight)
@@ -933,6 +912,193 @@ function closeMealDetailModal() {
   document.getElementById("mealDetailModal").classList.remove("active");
 }
 
+let currentFavMode = "manage"; // "manage" or "select"
+let activeFavFilter = "all";
+
+function openFavoritesModal(mode = "manage") {
+  currentFavMode = mode;
+  document.getElementById("favoritesModalTitle").innerText = 
+    mode === "select" ? "Choose Favorite to Log" : "Manage Custom Favorites";
+  
+  document.getElementById("favSearchInput").value = "";
+  activeFavFilter = "all";
+  
+  const filterBtns = document.querySelectorAll("#favCategoryFilters .filter-btn");
+  filterBtns.forEach(b => b.classList.remove("active"));
+  if (filterBtns.length > 0) filterBtns[0].classList.add("active");
+
+  renderFavoritesModalContent();
+  document.getElementById("favoritesModal").classList.add("active");
+}
+
+function closeFavoritesModal() {
+  document.getElementById("favoritesModal").classList.remove("active");
+}
+
+function setFavFilter(cat, btn) {
+  document.querySelectorAll("#favCategoryFilters .filter-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  activeFavFilter = cat;
+  renderFavoritesModalContent();
+}
+
+function renderFavoritesModalContent() {
+  const container = document.getElementById("favoritesModalContent");
+  container.innerHTML = "";
+
+  if (!favoriteFoods || favoriteFoods.length === 0) {
+    container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 20px;">No custom favorites saved yet. Save items as favorites from the food logger!</p>`;
+    return;
+  }
+
+  const searchQuery = document.getElementById("favSearchInput").value.toLowerCase().trim();
+  const categories = ["Breakfast", "Lunch", "Dinner", "Snacks"];
+  
+  const targetCategories = activeFavFilter === "all" ? categories : [activeFavFilter];
+  let totalVisibleItems = 0;
+
+  targetCategories.forEach((cat) => {
+    const catItems = favoriteFoods
+      .map((fav, index) => ({ ...fav, originalIndex: index }))
+      .filter((fav) => {
+        const matchesCategory = (fav.meal || "Snacks").toLowerCase() === cat.toLowerCase();
+        const matchesSearch = fav.name.toLowerCase().includes(searchQuery);
+        return matchesCategory && matchesSearch;
+      });
+
+    totalVisibleItems += catItems.length;
+
+    const groupDiv = document.createElement("div");
+    groupDiv.className = "meal-group";
+    
+    const badgeClass = `badge-${cat.toLowerCase()}`;
+    groupDiv.innerHTML = `
+      <div class="meal-group-title">
+        <span class="${badgeClass}">${cat}</span>
+        <span style="font-size: 0.75rem; color: var(--text-muted);">(${catItems.length} items)</span>
+      </div>
+    `;
+
+    if (catItems.length === 0) {
+      const emptyMsg = document.createElement("p");
+      emptyMsg.style.cssText = "color: var(--text-muted); font-size: 0.78rem; padding: 6px 12px;";
+      emptyMsg.innerText = "No matching favorites.";
+      groupDiv.appendChild(emptyMsg);
+    } else {
+      const ul = document.createElement("ul");
+      ul.className = "food-list";
+
+      catItems.forEach((item) => {
+        const li = document.createElement("li");
+        li.className = "food-item";
+        li.style.cssText = "display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;";
+        
+        if (currentFavMode === "select") {
+          li.style.cursor = "pointer";
+          li.innerHTML = `
+            <div class="food-info" style="flex: 1; min-width: 160px;" onclick="selectAndLogFavorite(${item.originalIndex})">
+              <b>${item.name}</b>
+              <span>${item.cal} kcal | P: ${item.prot}g | C: ${item.carb || 0}g | F: ${item.fat || 0}g</span>
+            </div>
+            <button class="btn-target" onclick="selectAndLogFavorite(${item.originalIndex})" style="padding: 4px 10px; font-size: 0.75rem;">Select ➔</button>
+          `;
+        } else {
+          li.innerHTML = `
+            <div class="food-info" style="flex: 1; min-width: 160px;">
+              <b>${item.name}</b>
+              <span>${item.cal} kcal | P: ${item.prot}g | C: ${item.carb || 0}g | F: ${item.fat || 0}g</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+              <select onchange="moveFavoriteCategory(${item.originalIndex}, this.value)" style="padding: 4px 8px; font-size: 0.75rem; width: auto;" title="Move to different category">
+                <option value="" disabled selected>Move to...</option>
+                <option value="Breakfast">Breakfast</option>
+                <option value="Lunch">Lunch</option>
+                <option value="Dinner">Dinner</option>
+                <option value="Snacks">Snacks</option>
+              </select>
+              <button class="btn-target" onclick="openEditFavoriteModal(${item.originalIndex})" style="padding: 4px 8px; font-size: 0.75rem; border-color: var(--accent-indigo); color: var(--accent-indigo);">Edit</button>
+              <button class="delete-btn" onclick="removeFavoriteItem(${item.originalIndex})" title="Delete Favorite">✕</button>
+            </div>
+          `;
+        }
+        ul.appendChild(li);
+      });
+      groupDiv.appendChild(ul);
+    }
+    container.appendChild(groupDiv);
+  });
+
+  if (totalVisibleItems === 0) {
+    container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 20px;">No favorites found matching "${searchQuery}".</p>`;
+  }
+}
+
+function selectAndLogFavorite(index) {
+  const item = favoriteFoods[index];
+  if (item) {
+    populateFoodInputs(item);
+    closeFavoritesModal();
+  }
+}
+
+function moveFavoriteCategory(index, newCategory) {
+  if (favoriteFoods[index]) {
+    favoriteFoods[index].meal = newCategory;
+    localStorage.setItem("fitness_favorites", JSON.stringify(favoriteFoods));
+    renderFavoritesModalContent();
+  }
+}
+
+function openEditFavoriteModal(index) {
+  const fav = favoriteFoods[index];
+  if (!fav) return;
+
+  document.getElementById("editFavIndex").value = index;
+  document.getElementById("editFavMeal").value = fav.meal || "Snacks";
+  document.getElementById("editFavName").value = fav.name;
+  document.getElementById("editFavCal").value = fav.cal;
+  document.getElementById("editFavProt").value = fav.prot;
+  document.getElementById("editFavCarb").value = fav.carb || 0;
+  document.getElementById("editFavFat").value = fav.fat || 0;
+
+  document.getElementById("editFavoriteModal").classList.add("active");
+}
+
+function closeEditFavoriteModal() {
+  document.getElementById("editFavoriteModal").classList.remove("active");
+}
+
+function saveEditedFavorite() {
+  const index = parseInt(document.getElementById("editFavIndex").value);
+  if (isNaN(index) || !favoriteFoods[index]) return;
+
+  const name = document.getElementById("editFavName").value.trim();
+  const cal = parseInt(document.getElementById("editFavCal").value) || 0;
+  const prot = parseInt(document.getElementById("editFavProt").value) || 0;
+  const carb = parseInt(document.getElementById("editFavCarb").value) || 0;
+  const fat = parseInt(document.getElementById("editFavFat").value) || 0;
+  const meal = document.getElementById("editFavMeal").value;
+
+  if (!name || cal <= 0) {
+    alert("Please enter a valid name and calorie count.");
+    return;
+  }
+
+  favoriteFoods[index] = { name, cal, prot, carb, fat, meal };
+  localStorage.setItem("fitness_favorites", JSON.stringify(favoriteFoods));
+  
+  closeEditFavoriteModal();
+  renderFavoritesModalContent();
+}
+
+function removeFavoriteItem(index) {
+  if (confirm(`Are you sure you want to remove "${favoriteFoods[index].name}" from your custom favorites?`)) {
+    favoriteFoods.splice(index, 1);
+    localStorage.setItem("fitness_favorites", JSON.stringify(favoriteFoods));
+    renderFavoritesModalContent();
+  }
+}
+
 function renderHistory() {
   const tbody = document.getElementById("historyBody");
   tbody.innerHTML = "";
@@ -999,7 +1165,6 @@ function importData(event) {
 }
 
 updateHeaderTargetsUI();
-renderFavoritesDropdown();
 loadDateData();
 renderHistory();
 checkAchievements();

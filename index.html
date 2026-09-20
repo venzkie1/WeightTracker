@@ -352,12 +352,22 @@
               </div>
 
               <div class="form-group">
-                <label for="favoriteSelect">⭐ Custom Favorites</label>
-                <select id="favoriteSelect" onchange="applyFavoriteFood()">
-                  <option value="" disabled selected>
-                    -- Select favorite --
-                  </option>
-                </select>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <label style="margin: 0;">⭐ Custom Favorites</label>
+                  <button 
+                    onclick="openFavoritesModal('manage')" 
+                    style="background: transparent; border: none; color: var(--accent-protein); font-size: 0.75rem; cursor: pointer; text-decoration: underline;"
+                  >
+                    ⚙️ Manage
+                  </button>
+                </div>
+                <button
+                  class="btn-target"
+                  onclick="openFavoritesModal('select')"
+                  style="width: 100%; text-align: center; border-color: var(--accent-protein); color: var(--accent-protein);"
+                >
+                  ⭐ Browse & Choose Favorite
+                </button>
               </div>
             </div>
 
@@ -856,6 +866,88 @@
           id="videoModalDesc"
           style="color: var(--text-muted); font-size: 0.85rem; margin-top: 12px"
         ></p>
+      </div>
+    </div>
+
+    <!-- Custom Favorites Manager & Selection Modal -->
+    <div id="favoritesModal" class="modal-overlay">
+      <div class="modal-card" style="max-width: 650px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <h2 style="font-size: 1.1rem;" id="favoritesModalTitle">Manage Custom Favorites</h2>
+          <button onclick="closeFavoritesModal()" style="background: transparent; color: var(--text-muted); border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
+        </div>
+        
+        <!-- Search bar & Filter pills -->
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
+          <input
+            type="text"
+            id="favSearchInput"
+            placeholder="🔍 Search favorites by name..."
+            oninput="renderFavoritesModalContent()"
+            style="width: 100%;"
+          />
+          <div class="filter-pills" id="favCategoryFilters" style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button class="filter-btn active" onclick="setFavFilter('all', this)">All</button>
+            <button class="filter-btn" onclick="setFavFilter('Breakfast', this)">Breakfast</button>
+            <button class="filter-btn" onclick="setFavFilter('Lunch', this)">Lunch</button>
+            <button class="filter-btn" onclick="setFavFilter('Dinner', this)">Dinner</button>
+            <button class="filter-btn" onclick="setFavFilter('Snacks', this)">Snacks</button>
+          </div>
+        </div>
+
+        <div id="favoritesModalContent" style="max-height: 360px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px;">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+          <button class="btn-primary" onclick="closeFavoritesModal()" style="width: auto; padding: 10px 20px;">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Favorite Sub-Modal -->
+    <div id="editFavoriteModal" class="modal-overlay" style="z-index: 1100;">
+      <div class="modal-card" style="max-width: 480px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <h2 style="font-size: 1.05rem;">Edit Custom Favorite</h2>
+          <button onclick="closeEditFavoriteModal()" style="background: transparent; color: var(--text-muted); border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
+        </div>
+        <input type="hidden" id="editFavIndex" />
+        <div class="form-group">
+          <label for="editFavMeal">Meal Category</label>
+          <select id="editFavMeal">
+            <option value="Breakfast">Breakfast</option>
+            <option value="Lunch">Lunch</option>
+            <option value="Dinner">Dinner</option>
+            <option value="Snacks">Snacks</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editFavName">Food Name</label>
+          <input type="text" id="editFavName" placeholder="Food name" />
+        </div>
+        <div class="grid-4">
+          <div class="form-group">
+            <label for="editFavCal">Cal</label>
+            <input type="number" id="editFavCal" placeholder="kcal" />
+          </div>
+          <div class="form-group">
+            <label for="editFavProt">Prot</label>
+            <input type="number" id="editFavProt" placeholder="g" />
+          </div>
+          <div class="form-group">
+            <label for="editFavCarb">Carbs</label>
+            <input type="number" id="editFavCarb" placeholder="g" />
+          </div>
+          <div class="form-group">
+            <label for="editFavFat">Fat</label>
+            <input type="number" id="editFavFat" placeholder="g" />
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 16px;">
+          <button class="btn-primary" onclick="saveEditedFavorite()">Save Changes</button>
+          <button class="btn-target" onclick="closeEditFavoriteModal()" style="width: 100%;">Cancel</button>
+        </div>
       </div>
     </div>
 
