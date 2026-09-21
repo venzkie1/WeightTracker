@@ -5,6 +5,7 @@ let userTargets = JSON.parse(localStorage.getItem("fitness_targets")) || {
   fat: 45,
   minGoalWt: 63,
   maxGoalWt: 65,
+  tdee: 2000,
 };
 document.getElementById("logDate").value = new Date()
   .toISOString()
@@ -142,8 +143,10 @@ const fitnessTipsLibrary = [
 ];
 
 function updateHeaderTargetsUI() {
+  const tdee = userTargets.tdee || (userTargets.cal + 500);
+  const recDeficit = Math.max(0, tdee - userTargets.cal);
   document.getElementById("headerTargets").innerText =
-    `Target: ${userTargets.cal} kcal | ~${userTargets.prot}g Protein | Goal 63-65 kg`;
+    `Target: ${userTargets.cal} kcal (TDEE: ${tdee} kcal | Rec. Deficit: ${recDeficit} kcal) | ~${userTargets.prot}g Protein | Goal 63-65 kg`;
 }
 
 function openTargetModal() {
@@ -179,6 +182,8 @@ function computeTDEE() {
   document.getElementById("editCarb").value = Math.round((targetCal * 0.4) / 4);
   document.getElementById("editFat").value = Math.round((targetCal * 0.25) / 9);
 
+  userTargets.tdee = tdee;
+
   unlockBadge("tdee_calculator");
   alert(`Computed TDEE: ~${tdee} kcal/day. Suggested deficit target (${targetCal} kcal) applied!`);
 }
@@ -190,6 +195,10 @@ function saveTargets() {
   userTargets.fat = parseInt(document.getElementById("editFat").value) || 45;
   userTargets.minGoalWt = parseFloat(document.getElementById("editMinWt").value) || 63;
   userTargets.maxGoalWt = parseFloat(document.getElementById("editMaxWt").value) || 65;
+
+  if (!userTargets.tdee) {
+    userTargets.tdee = userTargets.cal + 500;
+  }
 
   localStorage.setItem("fitness_targets", JSON.stringify(userTargets));
   updateHeaderTargetsUI();
@@ -701,44 +710,35 @@ function updateDashboard() {
     document.getElementById("week-wt").innerText = `-- kg`;
   }
 
+  // Calculate 7-day intakes and weekly totals
   let sumCal = 0, count = 0;
+  let totalWeekIntake = 0;
+
   dates.slice(0, 7).forEach((d) => {
     const t = getDayTotals(db[d]);
     if (t.cal > 0) {
       sumCal += t.cal;
       count++;
     }
+    totalWeekIntake += t.cal;
   });
+
+  const targetWeeklyIntake = (userTargets.cal || 1500) * 7;
+  document.getElementById("today-week-sub").innerText = `Wk Intake: ${totalWeekIntake.toLocaleString()} / ${targetWeeklyIntake.toLocaleString()} kcal`;
+
+  const tdee = userTargets.tdee || (userTargets.cal + 500);
+  const recDailyDeficit = Math.max(0, tdee - userTargets.cal);
+  const recWeeklyDeficit = recDailyDeficit * 7;
 
   if (count > 0) {
     const avgCal = Math.round(sumCal / count);
-    const activeTarget = userTargets.cal || 1600;
-    const weeklyDeficit = Math.max(0, activeTarget - avgCal) * 7;
-    
+    const actualWeeklyDeficit = Math.max(0, (tdee - avgCal) * 7);
+
     document.getElementById("week-cal").innerText = `${avgCal} kcal`;
-    document.getElementById("weekly-deficit").innerText = `Est. Deficit: ~${weeklyDeficit} kcal/wk`;
-
-    const sortedDates = Object.keys(db).sort((a, b) => new Date(a) - new Date(b));
-    const validWeights = sortedDates
-      .map(d => db[d].weight)
-      .filter(w => w !== null && !isNaN(w) && w > 0);
-    
-    const currentWeight = validWeights.length > 0 ? validWeights[validWeights.length - 1] : null;
-    const targetWeight = userTargets.minGoalWt || 63;
-
-    if (currentWeight !== null && currentWeight > targetWeight && weeklyDeficit > 0) {
-      const kgToLose = currentWeight - targetWeight;
-      const totalKcalNeeded = kgToLose * 7700;
-      const daysRemaining = Math.round((totalKcalNeeded / weeklyDeficit) * 7);
-      const weeksRemaining = (daysRemaining / 7).toFixed(1);
-
-      document.getElementById("weekly-deficit").innerText = `Deficit: ~${weeklyDeficit} kcal/wk (~${weeksRemaining} wks left)`;
-    } else if (currentWeight !== null && currentWeight <= targetWeight) {
-      document.getElementById("weekly-deficit").innerText = `Deficit: ~${weeklyDeficit} kcal/wk (Goal Reached! 🎉)`;
-    }
+    document.getElementById("weekly-deficit").innerText = `Deficit: ${actualWeeklyDeficit.toLocaleString()} / ${recWeeklyDeficit.toLocaleString()} kcal/wk`;
   } else {
     document.getElementById("week-cal").innerText = `0 kcal`;
-    document.getElementById("weekly-deficit").innerText = `Est. Deficit: -- kcal`;
+    document.getElementById("weekly-deficit").innerText = `Deficit: 0 / ${recWeeklyDeficit.toLocaleString()} kcal/wk`;
   }
 }
 
@@ -912,7 +912,7 @@ function closeMealDetailModal() {
   document.getElementById("mealDetailModal").classList.remove("active");
 }
 
-let currentFavMode = "manage"; // "manage" or "select"
+let currentFavMode = "manage";
 let activeFavFilter = "all";
 
 function openFavoritesModal(mode = "manage") {
