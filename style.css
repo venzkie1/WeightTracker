@@ -42,6 +42,11 @@ body {
   overflow-x: hidden;
 }
 
+#fasting-timer-display {
+    font-family: monospace;
+    letter-spacing: 2px;
+}
+
 .top-nav-bar {
   position: sticky;
   top: 0;

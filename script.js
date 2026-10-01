@@ -1138,6 +1138,186 @@ function deleteDateRecord(date) {
   }
 }
 
+// --- Fasting Tracker Logic ---
+let fastingState = JSON.parse(localStorage.getItem('fastingState')) || {
+    isActive: false,
+    startTime: null,
+    targetHours: 16
+};
+
+let fastingTimerInterval = null;
+
+function initFastingTracker() {
+    const startBtn = document.getElementById('btn-start-fast');
+    const endBtn = document.getElementById('btn-end-fast');
+    const resetBtn = document.getElementById('btn-reset-fast');
+    const protocolSelect = document.getElementById('fasting-protocol-select');
+    const customTimeInput = document.getElementById('custom-start-time-input');
+
+    if (protocolSelect) {
+        protocolSelect.value = fastingState.targetHours;
+        protocolSelect.addEventListener('change', (e) => {
+            fastingState.targetHours = parseInt(e.target.value);
+            saveFastingState();
+            updateFastingUI();
+        });
+    }
+
+    if (customTimeInput) {
+        customTimeInput.addEventListener('change', (e) => {
+            if (!e.target.value) return;
+            const selectedTimestamp = new Date(e.target.value).getTime();
+            if (!isNaN(selectedTimestamp)) {
+                fastingState.startTime = selectedTimestamp;
+                fastingState.isActive = true;
+                saveFastingState();
+                startFastingTimerLoop();
+            }
+        });
+    }
+
+    if (startBtn) startBtn.addEventListener('click', startFast);
+    if (endBtn) endBtn.addEventListener('click', endFast);
+    if (resetBtn) resetBtn.addEventListener('click', resetFast);
+
+    if (fastingState.isActive && fastingState.startTime) {
+        startFastingTimerLoop();
+    } else {
+        updateFastingUI();
+    }
+}
+
+function startFast() {
+    fastingState.isActive = true;
+    fastingState.startTime = new Date().getTime();
+    saveFastingState();
+    startFastingTimerLoop();
+}
+
+function endFast() {
+    fastingState.isActive = false;
+    clearInterval(fastingTimerInterval);
+    saveFastingState();
+    updateFastingUI();
+}
+
+function resetFast() {
+    fastingState.isActive = false;
+    fastingState.startTime = null;
+    clearInterval(fastingTimerInterval);
+    localStorage.removeItem('fastingState');
+    
+    const customTimeInput = document.getElementById('custom-start-time-input');
+    if (customTimeInput) customTimeInput.value = '';
+    
+    updateFastingUI();
+}
+
+function startFastingTimerLoop() {
+    clearInterval(fastingTimerInterval);
+    
+    // Immediate tick to avoid 1-second lag
+    tickFastingTimer();
+    
+    fastingTimerInterval = setInterval(tickFastingTimer, 1000);
+}
+
+function tickFastingTimer() {
+    if (!fastingState.startTime) return;
+    updateFastingUI();
+}
+
+function updateFastingUI() {
+    const timerDisplay = document.getElementById('fasting-timer-display');
+    const statusBadge = document.getElementById('fasting-status-badge');
+    const progressBar = document.getElementById('fasting-progress-bar');
+    const endTimeLabel = document.getElementById('fasting-end-time');
+    const startBtn = document.getElementById('btn-start-fast');
+    const endBtn = document.getElementById('btn-end-fast');
+    const protocolSelect = document.getElementById('fasting-protocol-select');
+    const customTimeInput = document.getElementById('custom-start-time-input');
+    const targetLabel = document.getElementById('fasting-target-label');
+
+    if (!timerDisplay) return;
+
+    if (protocolSelect) protocolSelect.value = fastingState.targetHours;
+    if (targetLabel) targetLabel.textContent = `Target: ${fastingState.targetHours} Hours`;
+
+    let totalSeconds = 0;
+    if (fastingState.startTime) {
+        const now = new Date().getTime();
+        totalSeconds = Math.max(0, Math.floor((now - fastingState.startTime) / 1000));
+        
+        // Sync datetime-local input if not actively focused
+        if (customTimeInput && document.activeElement !== customTimeInput) {
+            const startDate = new Date(fastingState.startTime);
+            // Format for datetime-local: YYYY-MM-DDThh:mm
+            const year = startDate.getFullYear();
+            const month = String(startDate.getMonth() + 1).padStart(2, '0');
+            const day = String(startDate.getDate()).padStart(2, '0');
+            const hours = String(startDate.getHours()).padStart(2, '0');
+            const minutes = String(startDate.getMinutes()).padStart(2, '0');
+            customTimeInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+    }
+
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    timerDisplay.textContent = 
+        String(hours).padStart(2, '0') + ':' +
+        String(minutes).padStart(2, '0') + ':' +
+        String(seconds).padStart(2, '0');
+
+    const targetSeconds = fastingState.targetHours * 3600;
+    let progressPercent = Math.min(100, (totalSeconds / targetSeconds) * 100);
+
+    if (progressBar) {
+        progressBar.style.width = `${progressPercent}%`;
+        if (progressPercent >= 100) {
+            progressBar.classList.remove('bg-success');
+            progressBar.classList.add('bg-info');
+        } else {
+            progressBar.classList.add('bg-success');
+            progressBar.classList.remove('bg-info');
+        }
+    }
+
+    if (fastingState.isActive) {
+        if (statusBadge) {
+            statusBadge.textContent = progressPercent >= 100 ? 'Goal Reached! 🎉' : 'Fasting in Progress...';
+            statusBadge.className = progressPercent >= 100 ? 'badge bg-info' : 'badge bg-success';
+        }
+        if (startBtn) startBtn.disabled = true;
+        if (endBtn) endBtn.disabled = false;
+
+        if (fastingState.startTime) {
+            const targetDate = new Date(fastingState.startTime + (targetSeconds * 1000));
+            endTimeLabel.textContent = `Goal: ${targetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        }
+    } else {
+        if (statusBadge) {
+            statusBadge.textContent = totalSeconds > 0 ? 'Fast Completed' : 'Not Started';
+            statusBadge.className = totalSeconds > 0 ? 'badge bg-primary' : 'badge bg-secondary';
+        }
+        if (startBtn) startBtn.disabled = false;
+        if (endBtn) endBtn.disabled = true;
+        if (!fastingState.startTime && endTimeLabel) {
+            endTimeLabel.textContent = 'Goal: --:--';
+        }
+    }
+}
+
+function saveFastingState() {
+    localStorage.setItem('fastingState', JSON.stringify(fastingState));
+}
+
+// Ensure initFastingTracker() is called on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+    initFastingTracker();
+});
+
 function exportData() {
   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
   const anchor = document.createElement("a");
