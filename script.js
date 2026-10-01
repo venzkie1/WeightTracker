@@ -1313,11 +1313,6 @@ function saveFastingState() {
     localStorage.setItem('fastingState', JSON.stringify(fastingState));
 }
 
-// Ensure initFastingTracker() is called on DOMContentLoaded
-document.addEventListener('DOMContentLoaded', () => {
-    initFastingTracker();
-});
-
 function exportData() {
   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
   const anchor = document.createElement("a");
@@ -1348,3 +1343,4 @@ updateHeaderTargetsUI();
 loadDateData();
 renderHistory();
 checkAchievements();
+initFastingTracker();
