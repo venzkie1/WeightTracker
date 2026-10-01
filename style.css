@@ -42,10 +42,104 @@ body {
   overflow-x: hidden;
 }
 
+.progress {
+  background-color: var(--bg-input, #2a2b3d);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+.form-select, select.form-select {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  padding: 8px 12px;
+  border-radius: var(--radius-elem);
+  font-size: 0.85rem;
+  width: 100%;
+  outline: none;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.bg-secondary { background: var(--bg-input); color: var(--text-muted); border: 1px solid var(--border); }
+.bg-success { background: rgba(29, 209, 161, 0.2); color: var(--success); border: 1px solid rgba(29, 209, 161, 0.4); }
+.bg-info { background: rgba(0, 210, 211, 0.2); color: var(--accent-carbs); border: 1px solid rgba(0, 210, 211, 0.4); }
+.bg-primary { background: rgba(99, 102, 241, 0.2); color: var(--accent-indigo); border: 1px solid rgba(99, 102, 241, 0.4); }
+
 #fasting-timer-display {
     font-family: monospace;
     letter-spacing: 2px;
 }
+
+/* --- Side-by-Side Fasting & Progress Layout --- */
+.fasting-overview-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 992px) {
+  .fasting-overview-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Milestone & State Tracker Styles --- */
+.fasting-milestones-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.milestone-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-elem);
+  transition: all 0.2s ease;
+}
+
+.milestone-item.active-phase {
+  border-color: var(--accent-indigo);
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.milestone-item.achieved {
+  border-color: rgba(29, 209, 161, 0.4);
+  background: rgba(29, 209, 161, 0.05);
+}
+
+.milestone-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+
+/* Color Coding for Fasting Phases */
+.phase-fed { background: rgba(255, 159, 67, 0.15); color: var(--warning); border: 1px solid rgba(255, 159, 67, 0.3); }
+.phase-transition { background: rgba(0, 210, 211, 0.15); color: var(--accent-carbs); border: 1px solid rgba(0, 210, 211, 0.3); }
+.phase-fatburn { background: rgba(99, 102, 241, 0.15); color: var(--accent-indigo); border: 1px solid rgba(99, 102, 241, 0.3); }
+.phase-ketosis { background: rgba(224, 86, 253, 0.15); color: var(--accent-protein); border: 1px solid rgba(224, 86, 253, 0.3); }
+.phase-autophagy { background: rgba(29, 209, 161, 0.15); color: var(--success); border: 1px solid rgba(29, 209, 161, 0.3); }
 
 .top-nav-bar {
   position: sticky;

@@ -83,51 +83,64 @@
         </div>
       </div>
 
-      <!-- Fasting Tracker Section -->
-      <section id="fasting-tracker-card" class="card mb-4 p-4 shadow-sm">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-              <h5 class="mb-0"><i class="bi bi-stopwatch me-2"></i>Intermittent Fasting</h5>
-              <span id="fasting-status-badge" class="badge bg-secondary">Not Started</span>
-          </div>
+      <!-- Side-by-Side Fasting Hub -->
+      <div class="fasting-overview-container">
+        
+        <!-- Fasting Tracker Widget -->
+        <section id="fasting-tracker-card" class="card p-4 shadow-sm" style="margin-bottom: 0;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">⏳ Intermittent Fasting</h5>
+                <span id="fasting-status-badge" class="badge bg-secondary">Not Started</span>
+            </div>
 
-          <!-- Protocol Selector -->
-          <div class="mb-3">
-              <label for="fasting-protocol-select" class="form-label small text-muted">Fasting Protocol</label>
-              <select id="fasting-protocol-select" class="form-select form-select-sm">
-                  <option value="16">16:8 Protocol (16 Hours)</option>
-                  <option value="20">20:4 Protocol (20 Hours)</option>
-                  <option value="24">24 Hours (Weekly Fast)</option>
-              </select>
-          </div>
-          
-          <div class="text-center my-3">
-              <h2 id="fasting-timer-display" class="display-6 fw-bold">00:00:00</h2>
-              <p id="fasting-target-label" class="text-muted small mb-0">Target: 16 Hours</p>
-          </div>
+            <!-- Protocol & Timer -->
+            <div class="row g-2 mb-3">
+                <div class="col-12">
+                    <select id="fasting-protocol-select" class="form-select form-select-sm">
+                        <option value="16">16:8 Protocol (16 Hours)</option>
+                        <option value="20">20:4 Protocol (20 Hours)</option>
+                        <option value="24">24 Hours (Weekly Fast)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="text-center my-2">
+                <h2 id="fasting-timer-display" class="display-6 fw-bold mb-0">00:00:00</h2>
+                <small id="fasting-target-label" class="text-muted">Target: 16h</small>
+            </div>
 
-          <!-- Progress Bar -->
-          <div class="progress mb-3" style="height: 10px;">
-              <div id="fasting-progress-bar" class="progress-bar bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-          </div>
+            <!-- Fixed Progress Bar Container using app's standard classes -->
+            <div class="progress-bar-bg" style="margin: 14px 0; height: 10px;">
+                <div id="fasting-progress-bar" class="progress-fill" style="width: 0%;"></div>
+            </div>
 
-          <!-- Manual Start Time Editor & Labels -->
-          <div class="row align-items-center mb-3">
-              <div class="col-7">
-                  <label for="custom-start-time-input" class="form-label small text-muted mb-1">Start Time:</label>
-                  <input type="datetime-local" id="custom-start-time-input" class="form-control form-control-sm">
-              </div>
-              <div class="col-5 text-end">
-                  <span id="fasting-end-time" class="small text-muted d-block mt-4">Goal: --:--</span>
-              </div>
-          </div>
+            <!-- Start Time Editor -->
+            <div class="d-flex justify-content-between align-items-center mb-3 bg-light p-2 rounded" style="background: var(--bg-input) !important;">
+                <input type="datetime-local" id="custom-start-time-input" class="form-control form-control-sm border-0 bg-transparent" style="color: inherit;">
+                <span id="fasting-end-time" class="small text-muted text-nowrap ms-2">Goal: --:--</span>
+            </div>
 
-          <!-- Controls -->
-          <div class="d-flex gap-2 mt-3">
-              <button id="btn-start-fast" class="btn btn-primary flex-grow-1" type="button">Start Fast</button>
-              <button id="btn-end-fast" class="btn btn-outline-danger" type="button" disabled>End</button>
-              <button id="btn-reset-fast" class="btn btn-outline-secondary" type="button">Reset</button>
-          </div>
-      </section>
+            <!-- Controls -->
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button id="btn-start-fast" class="btn-primary" style="flex: 2; margin-top: 0; background: var(--accent-indigo);">Start Fast</button>
+                <button id="btn-end-fast" class="btn-target" style="flex: 1; margin-top: 0; border-color: var(--danger); color: var(--danger);" disabled>End</button>
+                <button id="btn-reset-fast" class="btn-target" style="flex: 1; margin-top: 0;">Reset</button>
+            </div>
+        </section>
+
+        <!-- Cleaner Milestone Tracker Card -->
+        <section class="card p-4 shadow-sm" style="margin-bottom: 0;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">🧬 Body Stages</h5>
+                <span id="current-state-label" class="badge bg-dark text-light" style="font-size: 0.7rem;">Fed State</span>
+            </div>
+            
+            <div class="fasting-milestones-list" id="fasting-milestones-container">
+                <!-- Dynamically injected via script -->
+            </div>
+        </section>
+
+      </div>
 
       <!-- Overview KPI Cards -->
       <div class="overview-grid">
@@ -846,6 +859,22 @@
           >
             Cancel
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fasting Milestone Info Modal -->
+    <div id="milestoneInfoModal" class="modal-overlay">
+      <div class="modal-card" style="max-width: 440px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h2 style="font-size: 1.1rem;" id="milestoneModalTitle">Milestone Info</h2>
+          <button onclick="closeMilestoneInfoModal()" style="background: transparent; color: var(--text-muted); border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
+        </div>
+        <div id="milestoneModalBody" style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px;">
+          <!-- Description injected dynamically -->
+        </div>
+        <div style="display: flex; justify-content: flex-end;">
+          <button class="btn-primary" onclick="closeMilestoneInfoModal()" style="width: auto; padding: 8px 20px;">Got It</button>
         </div>
       </div>
     </div>

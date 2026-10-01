@@ -26,6 +26,7 @@ let unlockedBadges = JSON.parse(localStorage.getItem("fitness_badges")) || [];
 let calChartInstance = null;
 let macroChartInstance = null;
 let weightChartInstance = null;
+let fastingChartInstance = null;
 
 const achievementsList = [
   // Streaks (1-10)
@@ -1261,6 +1262,9 @@ function updateFastingUI() {
         }
     }
 
+    const hoursElapsed = totalSeconds / 3600;
+    renderFastingMilestones(hoursElapsed);
+
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
@@ -1311,6 +1315,58 @@ function updateFastingUI() {
 
 function saveFastingState() {
     localStorage.setItem('fastingState', JSON.stringify(fastingState));
+}
+
+const fastingMilestones = [
+  { hours: 0, title: "Fed State", badgeClass: "phase-fed", desc: "Your body is digesting and absorbing your meal. Insulin levels are elevated, and energy is drawn directly from circulating glucose." },
+  { hours: 4, title: "Postabsorptive", badgeClass: "phase-transition", desc: "Digestion is complete. Insulin and blood sugar levels drop, and your body begins transitioning to stored glycogen for steady energy." },
+  { hours: 12, title: "Fat-Burning Zone", badgeClass: "phase-fatburn", desc: "Glycogen stores deplete significantly. Your body shifts gears into mild ketosis, increasingly relying on stored body fat for fuel." },
+  { hours: 16, title: "Ketosis Ramping", badgeClass: "phase-ketosis", desc: "Ketone body production accelerates. Mental clarity often sharpens as your brain runs efficiently on ketones, and cellular maintenance picks up pace." },
+  { hours: 24, title: "Autophagy Peak", badgeClass: "phase-autophagy", desc: "Cellular cleanup (autophagy) initiates strongly, recycling damaged cell components, clearing cellular debris, and lowering systemic inflammation." }
+];
+
+function renderFastingMilestones(hoursElapsed) {
+    const container = document.getElementById("fasting-milestones-container");
+    const currentStateLabel = document.getElementById("current-state-label");
+    if (!container) return;
+
+    container.innerHTML = "";
+    let activeTitle = "Fed State";
+
+    fastingMilestones.forEach((m, idx) => {
+        const nextMilestoneHours = fastingMilestones[idx + 1] ? fastingMilestones[idx + 1].hours : 999;
+        const isCurrent = hoursElapsed >= m.hours && hoursElapsed < nextMilestoneHours;
+        const isAchieved = hoursElapsed >= m.hours;
+
+        if (isCurrent) {
+            activeTitle = m.title;
+        }
+
+        const item = document.createElement("div");
+        item.className = `milestone-item ${isCurrent ? "active-phase" : ""} ${isAchieved && !isCurrent ? "achieved" : ""}`;
+        item.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span>${m.title}</span>
+                <button onclick="openMilestoneInfoModal('${m.title} (${m.hours} Hours)', '${m.desc}')" style="background: transparent; border: 1px solid var(--border); color: var(--text-muted); border-radius: 50%; width: 20px; height: 20px; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Learn more" onmouseover="this.style.borderColor='var(--accent-indigo)'; this.style.color='var(--text-main)';" onmouseout="this.style.borderColor='var(--border)'; this.style.color='var(--text-muted)';">?</button>
+            </div>
+            <span class="milestone-badge ${m.badgeClass}">${m.hours}h</span>
+        `;
+        container.appendChild(item);
+    });
+
+    if (currentStateLabel) {
+        currentStateLabel.innerText = activeTitle;
+    }
+}
+
+function openMilestoneInfoModal(title, desc) {
+    document.getElementById("milestoneModalTitle").innerText = title;
+    document.getElementById("milestoneModalBody").innerText = desc;
+    document.getElementById("milestoneInfoModal").classList.add("active");
+}
+
+function closeMilestoneInfoModal() {
+    document.getElementById("milestoneInfoModal").classList.remove("active");
 }
 
 function exportData() {
